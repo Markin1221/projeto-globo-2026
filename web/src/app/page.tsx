@@ -1,6 +1,7 @@
 'use client';
 import { Fragment, useMemo, useState } from 'react';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, MapPin, ArrowUpRight } from 'lucide-react';
+import Link from 'next/link';
 import { BairroPicker } from '@/components/dialogs';
 import { DaySummary } from '@/components/day-summary';
 import { EntryCard, ResidentsBlock } from '@/components/cards';
@@ -34,6 +35,17 @@ export default function HomePage() {
   return (
     <>
       <PageHeader title="Início" />
+      <section className="home-intro" aria-labelledby="home-title">
+        <div className="home-intro-copy">
+          <p className="eyebrow"><MapPin size={14} aria-hidden />GRANDE RECIFE</p>
+          <h2 id="home-title">Sua cidade.<br /><span>Seu dia a dia.</span></h2>
+          <p>As notícias que importam, mais perto de você.</p>
+        </div>
+        <Link className="intro-map" href="/mapa" aria-label="Explorar o mapa dos bairros">
+          <span className="radar-art" aria-hidden><span /><span /><span /><MapPin size={27} strokeWidth={1.5} /></span>
+          <span>Explorar o mapa <ArrowUpRight size={14} aria-hidden /></span>
+        </Link>
+      </section>
       <Tabs label="Escopo do feed" value={scope} onChange={setScope} tabs={[{ id: 'meus', label: 'Meus bairros' }, { id: 'todos', label: 'Grande Recife' }]} />
       <PageState state={state} retry={retry}>
         <div className="home-top">

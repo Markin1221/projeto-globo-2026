@@ -7,6 +7,8 @@ const api = process.env.API_INTERNAL_URL ?? 'http://localhost:3001';
 
 const config: NextConfig = {
   reactStrictMode: true,
+  // O indicador de desenvolvimento sobrepõe o botão Início na navegação móvel.
+  devIndicators: false,
   output: 'standalone',
   outputFileTracingRoot: root,
   turbopack: { root },

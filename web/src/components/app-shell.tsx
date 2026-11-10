@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, Bookmark, Compass, Gavel, Home, LayoutDashboard, Map, Menu, Megaphone, Newspaper, Settings, Siren, Tv, User as UserIcon, Users, Route } from 'lucide-react';
+import { Bell, Bookmark, Compass, Gavel, Home, LayoutDashboard, Map, Menu, Megaphone, Newspaper, Settings, Siren, Tv, User as UserIcon, Users, Route, Radar } from 'lucide-react';
 import type { Role } from '@/domain/types';
 import { boot, useDb, useMe, useUi } from '@/store';
 import { DemoGuide, LiveBanner, ProfileSwitcher, RightRail, SpeechBar, Toasts, UserLine } from './shell-parts';
@@ -48,7 +48,7 @@ function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => 
         const Icon = n.icon;
         const count = n.badge ? badges[n.badge] : 0;
         return (
-          <Link key={n.href} href={n.href} className={on ? 'nav-link on' : 'nav-link'} aria-current={on ? 'page' : undefined} onClick={onNavigate}>
+          <Link key={n.href} href={n.href} className={on ? 'nav-link on' : 'nav-link'} title={n.label} aria-label={count > 0 ? `${n.label}, ${count} novos` : n.label} aria-current={on ? 'page' : undefined} onClick={onNavigate}>
             <span className="nav-icon"><Icon size={23} aria-hidden />{count > 0 && <span className="nav-badge">{count}<span className="sr-only"> novos</span></span>}</span>
             <span className="nav-label">{n.label}</span>
           </Link>
@@ -58,7 +58,7 @@ function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => 
   );
 }
 
-export const Logo = () => <span className="logo" aria-hidden><i />BP</span>;
+export const Logo = () => <span className="logo" aria-hidden><Radar size={26} strokeWidth={1.7} /></span>;
 
 function FullShell({ children }: { children: ReactNode }) {
   const me = useMe();
@@ -77,8 +77,12 @@ function FullShell({ children }: { children: ReactNode }) {
     <div className="shell">
       <a className="skip" href="#conteudo">Pular para o conteúdo</a>
       <nav className="side" aria-label="Principal">
-        <Link href="/" className="brand"><Logo /><span>Bairro em Pauta</span></Link>
-        <div className="side-links"><NavLinks items={items} /></div>
+        <Link href="/" className="brand" aria-label="Bairro em Pauta — início"><Logo /><span className="brand-copy">Bairro em Pauta<small>Informação perto de você</small></span></Link>
+        <div className="side-links">
+          <div className="nav-group"><p className="nav-section-label">Descobrir</p><NavLinks items={items.filter((n) => NAV.indexOf(n) < 6)} /></div>
+          <div className="nav-group"><p className="nav-section-label">Seu espaço</p><NavLinks items={items.filter((n) => NAV.indexOf(n) >= 6 && !n.roles)} /></div>
+          {items.some((n) => n.roles) && <div className="nav-group"><p className="nav-section-label">Redação</p><NavLinks items={items.filter((n) => n.roles)} /></div>}
+        </div>
         <div className="side-foot"><UserLine /><ProfileSwitcher /><p className="sample-note">Protótipo. Todo o conteúdo é de exemplo.</p></div>
       </nav>
       <main id="conteudo" className="center" ref={main} tabIndex={-1}>{children}</main>

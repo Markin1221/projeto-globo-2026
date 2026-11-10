@@ -12,7 +12,7 @@ services:
       - pgdata:/var/lib/postgresql/data
     # Só acessível pela própria máquina (útil para o scraper e para inspecionar o banco).
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s

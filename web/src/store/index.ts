@@ -11,7 +11,7 @@ export interface Prefs { theme: Theme; font: number; simple: boolean; actorHandl
 export interface Toast { id: number; kind: 'ok' | 'erro' | 'info'; text: string }
 export interface Speaking { id: string; text: string; loading?: boolean }
 
-const DEFAULTS: Prefs = { theme: 'dark', font: 1, simple: false, actorHandle: 'marinadoalto', voice: 'neural' };
+const DEFAULTS: Prefs = { theme: 'light', font: 1, simple: false, actorHandle: 'marinadoalto', voice: 'neural' };
 const KEY = 'bairro-em-pauta:prefs';
 
 interface UiState { prefs: Prefs; toasts: Toast[]; speaking: Speaking | null; failing: boolean; guideOpen: boolean; dismissedLive: string | null }
