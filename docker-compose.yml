@@ -1,0 +1,110 @@
+name: bairro-em-pauta
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bairro}
+      POSTGRES_USER: ${POSTGRES_USER:-bairro}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Só acessível pela própria máquina (útil para o scraper e para inspecionar o banco).
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  tts:
+    build: ./tts
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-bairro}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bairro}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
+      INGEST_API_KEY: ${INGEST_API_KEY:-}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      TTS_URL: http://tts:5000
+      # Resumo dos relatos com IA (opcional). Sem nada configurado, o app usa um resumo automático.
+      AI_PROVIDER: ${AI_PROVIDER:-auto}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_FALLBACK_MODELS: ${AI_FALLBACK_MODELS:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OLLAMA_URL: ${OLLAMA_URL:-}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
+    # Permite falar com um Ollama instalado no próprio computador (OLLAMA_URL=http://host.docker.internal:11434).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+      args:
+        API_INTERNAL_URL: http://api:3001
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  # Scraper do g1 PE. Não sobe por padrão: ative com  docker compose --profile scraper up -d
+  scraper:
+    image: node:22-alpine
+    profiles: ["scraper"]
+    restart: unless-stopped
+    working_dir: /scraper
+    command: ["node", "g1.mjs", "--a-cada", "${SCRAPER_MINUTOS:-15}", "--paginas", "${SCRAPER_PAGINAS:-3}"]
+    environment:
+      API_URL: http://api:3001/api
+      INGEST_API_KEY: ${INGEST_API_KEY:?defina INGEST_API_KEY no .env para usar o scraper}
+    volumes:
+      - ./scraper:/scraper:ro
+    depends_on:
+      - api
+
+  # IA local e gratuita. Não sobe por padrão: ative com  docker compose --profile ia-local up -d
+  # e coloque OLLAMA_URL=http://ollama:11434 no .env. Baixa o modelo na primeira vez (cerca de 2 GB).
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ia-local"]
+    restart: unless-stopped
+    environment:
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 4; ollama pull $${OLLAMA_MODEL}; wait"]
+    volumes:
+      - ollama_data:/root/.ollama
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - api
+
+volumes:
+  ollama_data:
+  pgdata:
+  caddy_data:
+  caddy_config:

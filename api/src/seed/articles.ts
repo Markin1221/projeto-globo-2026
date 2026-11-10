@@ -1,0 +1,49 @@
+import type { Article, Topic } from '../../../shared/domain/types';
+import { ago, hours } from './base';
+
+function a(id: string, d: number, title: string, bairroIds: string[], topic: Topic, lead: string, body: string, authorId = 'helena', extra: Partial<Article> = {}): Article {
+  return { id, kind: 'materia', sourceId: 'portal', publishedAt: ago(d), title, bairroIds, topic, lead, body: body.split('|'), authorId, ...extra };
+}
+const BURACO = { key: 'buraco-alto-ceu', label: 'Buraco na Rua Alto do Céu' };
+const AGUA = { key: 'agua-varzea', label: 'Falta d’água na Várzea' };
+const LIMPEZA = { key: 'lixo-canal-ibura', label: 'Lixo no canal do Ibura' };
+
+export const ARTICLES: Article[] = [
+  a('m1', 47.2, 'Moradores registram buraco na Rua Alto do Céu, em Casa Amarela', ['casa-amarela'], 'obras', 'Cratera surgiu depois de obra de saneamento e já danificou veículos.', 'Moradores afirmam que o problema começou depois de uma intervenção na rede de esgoto.|A prefeitura informou que enviaria uma equipe para avaliar o trecho.', 'helena', { issue: BURACO }),
+  a('m2', 20, 'Reparo paliativo na Rua Alto do Céu não resolve e buraco cresce', ['casa-amarela'], 'obras', 'Remendo durou menos de três semanas, segundo moradores.', 'Com as primeiras chuvas, o asfalto voltou a ceder.|A vizinhança pede uma solução definitiva para a drenagem.', 'bruno', { issue: BURACO }),
+  a('m3', hours(14), 'Feira de Casa Amarela ganha nova cobertura para os boxes', ['casa-amarela'], 'comercio', 'Obra de um mês vai trocar telhas e organizar a circulação.', 'Os permissionários seguem trabalhando durante a reforma.|Parte dos boxes muda de lugar temporariamente.', 'helena'),
+  a('m4', 3, 'UBS de Casa Amarela amplia horário de atendimento às quartas', ['casa-amarela'], 'saude', 'Unidade funciona até as 20h durante os próximos três meses.', 'A medida busca atender quem trabalha em horário comercial.|Consultas devem ser marcadas na recepção.', 'bruno'),
+  a('m5', 9, 'Escola municipal de Casa Amarela abre vagas para educação de jovens e adultos', ['casa-amarela'], 'educacao', 'Matrículas vão até o fim do mês.', 'As aulas acontecem à noite.|É preciso levar documento e comprovante de residência.', 'helena'),
+  a('m6', 1.4, 'Praça de Casa Forte terá iluminação renovada', ['casa-forte'], 'obras', 'Projeto prevê lâmpadas de LED e novos bancos.', 'O serviço começa na próxima semana.|A feirinha de domingo não será afetada.', 'bruno'),
+  a('m7', 15, 'Casa Forte: moradores pedem faixa de pedestres perto de escola', ['casa-forte'], 'transito', 'Pais relatam risco na saída dos alunos.', 'O pedido foi enviado à autarquia de trânsito.|Um estudo técnico será feito no local.', 'helena'),
+  a('m8', hours(20), 'Boa Vista recebe semana de negociação de dívidas', ['boa-vista'], 'comercio', 'Mutirão acontece em galeria da Rua da Imperatriz.', 'Consumidores devem levar documentos e comprovantes.|O atendimento é gratuito.', 'bruno'),
+  a('m9', 4, 'Calçadas da Boa Vista entram em plano de acessibilidade', ['boa-vista'], 'obras', 'Rampas e piso tátil serão instalados em cinco ruas.', 'A primeira etapa começa pela área dos hospitais.|O projeto dura seis meses.', 'helena'),
+  a('m10', 2.1, 'Boa Viagem terá mais salva-vidas no verão', ['boa-viagem'], 'seguranca', 'Reforço começa em dezembro nos trechos de maior risco.', 'Banhistas devem respeitar a sinalização sobre tubarões.|As bandeiras indicam as áreas de perigo.', 'bruno'),
+  a('m11', 11, 'Moradores de Boa Viagem discutem ciclovia em audiência', ['boa-viagem'], 'transporte', 'Proposta liga a orla ao metrô.', 'A audiência teve mais de cem participantes.|O relatório será publicado em 30 dias.', 'helena'),
+  a('m12', 5.5, 'Várzea: rodízio de abastecimento é anunciado para o mês', ['varzea'], 'agua', 'Companhia publica calendário por ruas.', 'O rodízio vale enquanto durar a manutenção.|O calendário está disponível nos postos de atendimento.', 'bruno', { issue: AGUA }),
+  a('m13', 18, 'Comunidade da Várzea reclama de água barrenta', ['varzea'], 'agua', 'Companhia diz que coletou amostras.', 'Moradores evitam usar a água para cozinhar.|O resultado da análise sai em uma semana.', 'helena', { issue: AGUA }),
+  a('m14', 3.5, 'Mutirão retira lixo do canal do Ibura', ['ibura'], 'meio-ambiente', 'Ação foi feita depois de novo transbordo.', 'Foram retiradas quatro toneladas de resíduos.|A prefeitura pede descarte correto.', 'bruno', { issue: LIMPEZA }),
+  a('m15', 30, 'Lixo acumulado volta a preocupar moradores do Ibura', ['ibura'], 'meio-ambiente', 'Canal recebe entulho de obras irregulares.', 'A associação de moradores cobra fiscalização.|Os pontos de descarte foram mapeados.', 'helena', { issue: LIMPEZA }),
+  a('m16', 7, 'Mercado de Afogados tem novo horário de funcionamento', ['afogados'], 'comercio', 'Abertura será às 6h a partir de segunda.', 'Comerciantes aprovaram a mudança em reunião.|O estacionamento segue no mesmo lugar.', 'bruno'),
+  a('m17', 6.5, 'Madalena terá feira agroecológica às quintas', ['madalena'], 'comercio', 'Produtores da Zona da Mata vendem direto ao consumidor.', 'A feira ocupa a praça principal.|Funciona das 7h ao meio-dia.', 'helena'),
+  a('m18', 13, 'Torre: ponte de pedestres passa por vistoria', ['torre'], 'obras', 'Laudo deve sair em 15 dias.', 'A passagem segue liberada.|A prefeitura vai avaliar o guarda-corpo.', 'bruno'),
+  a('m19', 8.5, 'Graças e Espinheiro têm operação tapa-buraco nesta semana', ['gracas', 'espinheiro'], 'obras', 'Serviço acontece à noite para reduzir o transtorno.', 'As equipes começam pelas vias de maior tráfego.|Motoristas devem redobrar a atenção.', 'helena'),
+  a('m20', 16, 'Bairro do Recife recebe festival de música no fim de semana', ['recife-antigo'], 'cultura', 'Palcos gratuitos ocupam o Marco Zero.', 'A programação começa às 16h.|Haverá reforço no policiamento.', 'bruno'),
+  a('m21', 22, 'Santo Amaro ganha sala de leitura comunitária', ['santo-amaro'], 'educacao', 'Espaço funciona na associação de moradores.', 'O acervo foi formado com doações.|Voluntários atendem à tarde.', 'helena'),
+  a('m22', 26, 'Imbiribeira: alagamento recorrente é tema de reunião', ['imbiribeira'], 'alagamento', 'Moradores entregam abaixo-assinado.', 'O documento pede a limpeza das galerias.|Uma nova reunião foi marcada.', 'bruno'),
+  a('m26', 1.1, 'Ladeiras do Carmo ganham reforço na coleta antes do fim de semana', ['olinda-carmo'], 'meio-ambiente', 'Mutirão de limpeza passa pelo Sítio Histórico de Olinda.', 'A coleta extra acontece na sexta e no sábado.|Moradores devem colocar o lixo até as 18h.', 'bruno'),
+  a('m27', 2.4, 'Bairro Novo terá trecho da orla em obras por dois meses', ['olinda-bairro-novo', 'olinda-casa-caiada'], 'obras', 'Contenção do avanço do mar interdita parte do calçadão.', 'O trânsito na avenida beira-mar segue liberado.|Quiosques do trecho mudam de lugar.', 'helena'),
+  a('m28', 6, 'Peixinhos recebe ação de combate à dengue', ['olinda-peixinhos'], 'saude', 'Agentes visitam casas e recolhem recipientes.', 'A ação dura uma semana.|Moradores podem pedir visita pelo posto.', 'bruno'),
+  a('m29', 0.9, 'Piedade: avanço do mar volta a preocupar moradores', ['jaboatao-piedade'], 'meio-ambiente', 'Ressaca atingiu a calçada em três pontos da orla.', 'A prefeitura de Jaboatão avalia nova contenção.|Banhistas devem evitar o trecho.', 'helena'),
+  a('m30', 3.2, 'Prazeres ganha novo terminal de ônibus provisório', ['jaboatao-prazeres'], 'transporte', 'Linhas mudam de ponto durante a reforma.', 'O terminal provisório fica a 200 metros do atual.|As mudanças valem por seis meses.', 'bruno'),
+  a('m31', 8, 'Candeias terá feira de serviços gratuitos no sábado', ['jaboatao-candeias'], 'cultura', 'Emissão de documentos e atendimento de saúde na praça.', 'O atendimento vai das 8h às 14h.|É preciso levar documento com foto.', 'helena'),
+  // Acompanhamento de casos: o buraco foi tapado e voltou a abrir (ver o trecho t1); a calçada da Torre foi consertada.
+  a('m32', 9, 'Buraco da Rua Alto do Céu é tapado depois de duas semanas', ['casa-amarela'], 'obras', 'Equipe da prefeitura refez o asfalto do trecho em uma noite.', 'Os ônibus voltaram a subir pelo trajeto normal.|Moradores temem que o problema volte com a chuva.', 'bruno', { issue: BURACO }),
+  a('m33', 1.8, 'Prefeitura isola calçada que cedeu em frente à escola na Torre', ['torre'], 'obras', 'Equipe colocou tapumes no buraco e promete o conserto da calçada em dois dias.', 'Os alunos estão usando o portão lateral.|A causa foi um vazamento na rede de água.', 'helena'),
+  a('m34', 0.4, 'Calçada em frente à escola na Torre é consertada', ['torre'], 'obras', 'Conserto da calçada que cedeu terminou antes da entrada dos alunos.', 'O portão principal da escola foi reaberto.|A companhia de saneamento trocou o cano que vazava.', 'bruno'),
+  // Matérias nascidas de relatos confirmados pela redação.
+  a('m23', 4.5, 'Redação confirma poste caído em rua de Nova Descoberta', ['nova-descoberta'], 'seguranca', 'Relato de moradora foi apurado e a companhia de energia fez o reparo.', 'A reportagem esteve no local e ouviu a concessionária.|O serviço foi concluído na mesma tarde.', 'helena', { kind: 'post', sourceId: undefined, originRelatoId: 'r12' }),
+  a('m24', 9.5, 'Vazamento em Água Fria desperdiça água há dois dias, confirma redação', ['agua-fria'], 'agua', 'Moradores avisaram pela plataforma, e a companhia enviou uma equipe.', 'A apuração confirmou o vazamento junto à companhia de saneamento.|O reparo foi feito na manhã seguinte.', 'bruno', { kind: 'post', sourceId: undefined, originRelatoId: 'r13' }),
+  a('m25', 14, 'Redação confirma semáforo apagado no Espinheiro', ['espinheiro'], 'transito', 'Cruzamento ficou sem sinalização durante a tarde.', 'A autarquia de trânsito confirmou a pane elétrica.|Agentes foram enviados para o local.', 'helena', { kind: 'post', sourceId: undefined, originRelatoId: 'r14' }),
+];
+

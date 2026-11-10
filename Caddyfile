@@ -1,0 +1,13 @@
+# SITE_ADDRESS=seu-dominio.com.br ativa HTTPS automático (Let's Encrypt). Sem domínio, use :80.
+{$SITE_ADDRESS::80} {
+	encode gzip
+	handle /api/* {
+		reverse_proxy api:3001 {
+			# Necessário para o tempo real (SSE) chegar sem atraso.
+			flush_interval -1
+		}
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}
