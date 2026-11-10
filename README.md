@@ -160,3 +160,5 @@ A leitura em voz alta usa a voz neural `pt_BR-faber-medium` do Piper, gerada no 
   - envio real de foto e áudio;
   - transcrição real (Whisper) dos telejornais;
   - notificações push, incluindo avisar quem segue o bairro quando um caso muda de etapa.
+
+ ᓚᘏᗢ
