@@ -32,7 +32,7 @@ export default function MapPage() {
             <MapLegend />
           </div>
           {city && <CityMap db={db} city={city} mode={{ kind: 'volume', followed: me.followed }} label={`Mapa de ${city.name} com os bairros coloridos pelo volume de notícias. A lista abaixo traz os mesmos dados.`} />}
-          <p className="muted">Quanto mais forte a cor e maior o círculo, mais vezes o bairro foi pauta. Toque em um bairro para abrir. Contorno claro: bairros que você segue.</p>
+          <p className="muted">Quanto mais forte a cor, mais vezes o bairro foi pauta. Os bairros aparecem com o contorno oficial da prefeitura; os apagados ainda não são acompanhados pelo app. Toque em um bairro para abrir. Contorno claro: bairros que você segue.</p>
           <h2>Bairros de {city?.name}</h2>
           <ul className="vol-list">{list.map(({ b, v }) => <li key={b.id}><Link href={`/bairro/${b.id}`}>{b.name}</Link><span>{v} {v === 1 ? 'notícia' : 'notícias'}</span></li>)}</ul>
         </div>

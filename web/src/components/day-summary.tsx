@@ -4,7 +4,7 @@
 // Jornalista e admin: tudo o que saiu, alertas e possíveis pautas, para decidir se há matéria.
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Lightbulb, Loader2, PlayCircle, Sparkles } from 'lucide-react';
+import { Lightbulb, Loader2, Newspaper, PlayCircle, Sparkles } from 'lucide-react';
 import { canEditCases } from '@/domain/rules';
 import { activeAlerts, bairroName, dailySummary, officialFeed } from '@/domain/selectors';
 import type { DaySummaryData } from '@/domain/types';
@@ -49,7 +49,7 @@ export function DaySummary({ bairroId, title, picker }: { bairroId: string; titl
         </div>
       )}
       {!staff && watchHref && day?.watch && (
-        <Link href={watchHref} className="btn btn-primary summary-watch"><PlayCircle size={18} aria-hidden />{day.watch.label}</Link>
+        <Link href={watchHref} className="btn btn-primary summary-watch">{day.watch.kind === 'segment' ? <PlayCircle size={18} aria-hidden /> : <Newspaper size={18} aria-hidden />}{day.watch.label}</Link>
       )}
       <div className="row between">
         <small className="ai-note">

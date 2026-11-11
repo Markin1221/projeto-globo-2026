@@ -6,6 +6,7 @@ import { migrate, q, tx, waitForDb } from './db';
 import { seedDatabase } from './seed/load';
 import { recomputeAll } from './ingest';
 import { mlStats, trainAll } from './ml/models';
+import { applyLimits } from './limits';
 
 async function bootstrap() {
   await waitForDb();
@@ -20,6 +21,9 @@ async function bootstrap() {
     await tx((c) => seedDatabase(c));
     console.log('Banco vazio: dados de exemplo carregados.');
   }
+
+  const limits = await applyLimits();
+  if (limits) console.log(`Limites oficiais aplicados em ${limits} bairros.`);
 
   // Primeira subida depois da migração 002: calcula localização e utilidade das notícias que já existiam.
   const [{ pending }] = await q<{ pending: number }>('select count(*)::int as pending from news_items where utility is null');

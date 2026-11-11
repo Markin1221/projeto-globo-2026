@@ -16,6 +16,7 @@ type Mode =
   | { kind: 'pick'; pin?: LatLng; selected?: string; onPick: (p: LatLng & { bairroId: string }) => void }
   | { kind: 'show'; pin?: LatLng; selected?: string };
 
+const normName = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const cssVar = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#c8102e';
 
 export function CityMap({ db, city, mode, label, height = 460 }: { db: Db; city?: City; mode: Mode; label: string; height?: number }) {
@@ -27,12 +28,22 @@ export function CityMap({ db, city, mode, label, height = 460 }: { db: Db; city?
   // Atualiza as cores dos bairros quando o usuário troca o tema.
   useUi();
   const [ready, setReady] = useState(false);
+  // Contornos oficiais de todos os bairros da cidade (fundo do mapa). Carregados uma vez por cidade.
+  const [limits, setLimits] = useState<Record<string, GeoJSON.FeatureCollection | null>>({});
   const modeRef = useRef(mode);
   modeRef.current = mode;
 
   const cityId = city?.id ?? db.bairros.find((b) => b.id === (mode.kind !== 'volume' ? mode.selected : ''))?.cityId ?? db.cities[0]?.id;
   const cityObj = db.cities.find((c) => c.id === cityId);
   const bairros = db.bairros.filter((b) => b.active && (mode.kind !== 'volume' || b.cityId === cityId));
+
+  useEffect(() => {
+    if (!cityId || cityId in limits) return;
+    let alive = true;
+    fetch(`/api/limites/${cityId}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+      .then((geo) => { if (alive) setLimits((m) => ({ ...m, [cityId]: geo && geo.features?.length ? geo : null })); });
+    return () => { alive = false; };
+  }, [cityId, limits]);
 
   // Cria o mapa uma vez.
   useEffect(() => {
@@ -77,11 +88,24 @@ export function CityMap({ db, city, mode, label, height = 460 }: { db: Db; city?
       : mod.circleMarker([b.lat, b.lng], { ...style, radius: r });
 
     if (md.kind === 'volume') {
+      // Fundo: todos os bairros da cidade com o contorno oficial, apagados. Os acompanhados pelo app acendem por cima.
+      const bg = cityId ? limits[cityId] : null;
+      if (bg) {
+        const known = new Set(bairros.map((b) => normName(b.name)));
+        const line = cssVar('--line');
+        mod.geoJSON(bg, {
+          filter: (f) => !known.has(normName(String(f.properties?.nome ?? ''))) && !(normName(String(f.properties?.nome ?? '')) === 'recife' && known.has('bairro do recife')),
+          style: { color: line, weight: 1, fillColor: colors[0], fillOpacity: 0.28 },
+          onEachFeature: (f, l) => l.bindTooltip(`<strong>${f.properties?.nome}</strong><br>Sem notícias acompanhadas`, { direction: 'top', className: 'map-tip' }),
+        }).addTo(g);
+      }
       for (const b of bairros) {
         const v = newsVolume(db, b.id);
         const lv = volumeLevel(v);
         const followed = md.followed.includes(b.id);
-        const s = shape(b, { color: followed ? text : colors[Math.max(lv, 1)], weight: followed ? 3 : 1.5, fillColor: colors[lv], fillOpacity: lv === 0 ? 0.35 : 0.72 }, 12 + lv * 4);
+        const s = shape(b, b.boundary
+          ? { color: followed ? text : colors[Math.max(lv, 2)], weight: followed ? 3 : 1.5, fillColor: colors[lv], fillOpacity: lv === 0 ? 0.4 : 0.78 }
+          : { color: followed ? text : colors[Math.max(lv, 1)], weight: followed ? 3 : 1.5, fillColor: colors[lv], fillOpacity: lv === 0 ? 0.35 : 0.72 }, 12 + lv * 4);
         s.bindTooltip(`<strong>${b.name}</strong><br>${v} ${v === 1 ? 'notícia' : 'notícias'}`, { direction: 'top', permanent: false, className: 'map-tip' });
         s.on('click', () => router.push(`/bairro/${b.id}`));
         s.addTo(g);

@@ -8,6 +8,7 @@ import { ingestNews, ingestRuns, knownUrls, recomputeAll, type IngestBody } from
 import { trainAll } from './ml/models';
 import { summarize, summarizeDay } from './ai';
 import { canEditCases } from '../../shared/domain/rules';
+import { applyLimits, cityLimits } from './limits';
 import { withTriage } from './ml/triage-run';
 import { DEMO_MODE, loadUser, snapshot, UUID } from './repo';
 import { seedDatabase } from './seed/load';
@@ -30,6 +31,7 @@ export async function resetDatabase() {
   await dropAll();
   await migrate();
   await tx((c) => seedDatabase(c));
+  await applyLimits();
   await recomputeAll();
   await trainAll();
 }
@@ -37,6 +39,12 @@ export async function resetDatabase() {
 @Controller()
 class AppController {
   @Get('health') health() { return { ok: true }; }
+  /** Contornos oficiais de todos os bairros de uma cidade, para o mapa (inclusive os que o app ainda não acompanha). */
+  @Get('limites/:cidade') limites(@Param('cidade') cidade: string, @Res({ passthrough: true }) res: Response) {
+    const geo = cityLimits(cidade);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return geo ?? { type: 'FeatureCollection', features: [] };
+  }
 
   @Get('snapshot') async snapshot(@Req() req: Request) { const v = await viewer(req); return withTriage(await snapshot(v, S.liveState()), v); }
 

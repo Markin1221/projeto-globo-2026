@@ -2,30 +2,29 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, Bookmark, Compass, Gavel, Home, LayoutDashboard, Map, Menu, Megaphone, Newspaper, Settings, Siren, Tv, User as UserIcon, Users, Route, Radar } from 'lucide-react';
+import { Bell, Gavel, Home, LayoutDashboard, Map, Menu, Megaphone, Newspaper, PanelLeftClose, PanelLeftOpen, Radar, Route, Search, Settings, Siren, Tv, Users } from 'lucide-react';
 import type { Role } from '@/domain/types';
 import { boot, setFont, setPrefs, useDb, useMe, useUi } from '@/store';
 import { DemoGuide, LiveBanner, NEXT_THEME, ProfileSwitcher, RightRail, SpeechBar, THEME_LABEL, Toasts, UserLine } from './shell-parts';
 import { SimpleMode } from './simple-mode';
 import { ErrorState, Modal, Skeleton } from './ui';
 
-interface NavItem { href: string; label: string; icon: typeof Home; roles?: Role[]; badge?: 'notif' | 'alerts' }
+// group: onde o item aparece no menu lateral. 'mais': só no menu "Mais" do celular (fica fora do caminho, mas acessível).
+interface NavItem { href: string; label: string; icon: typeof Home; roles?: Role[]; badge?: 'notif' | 'alerts'; group: 'descobrir' | 'espaco' | 'redacao' | 'mais' }
 const NAV: NavItem[] = [
-  { href: '/', label: 'Início', icon: Home },
-  { href: '/explorar', label: 'Explorar', icon: Compass },
-  { href: '/mapa', label: 'Mapa', icon: Map },
-  { href: '/telejornais', label: 'Telejornais', icon: Tv },
-  { href: '/relatos', label: 'Relatos dos moradores', icon: Users },
-  { href: '/casos', label: 'Acompanhamento', icon: Route },
-  { href: '/alertas', label: 'Alertas', icon: Siren, badge: 'alerts' },
-  { href: '/notificacoes', label: 'Notificações', icon: Bell, badge: 'notif' },
-  { href: '/relatar', label: 'Relatar', icon: Megaphone },
-  { href: '/salvos', label: 'Salvos', icon: Bookmark },
-  { href: '/perfil', label: 'Perfil', icon: UserIcon },
-  { href: '/configuracoes', label: 'Configurações', icon: Settings },
-  { href: '/jornalista', label: 'Painel do Jornalista', icon: Newspaper, roles: ['jornalista'] },
-  { href: '/moderacao', label: 'Moderação', icon: Gavel, roles: ['moderador'] },
-  { href: '/admin', label: 'Admin', icon: LayoutDashboard, roles: ['admin'] },
+  { href: '/', label: 'Início', icon: Home, group: 'descobrir' },
+  { href: '/mapa', label: 'Mapa', icon: Map, group: 'descobrir' },
+  { href: '/telejornais', label: 'Telejornais', icon: Tv, group: 'descobrir' },
+  { href: '/relatos', label: 'Relatos dos moradores', icon: Users, group: 'descobrir' },
+  { href: '/alertas', label: 'Alertas', icon: Siren, badge: 'alerts', group: 'espaco' },
+  { href: '/notificacoes', label: 'Notificações', icon: Bell, badge: 'notif', group: 'espaco' },
+  { href: '/relatar', label: 'Relatar', icon: Megaphone, group: 'espaco' },
+  { href: '/configuracoes', label: 'Configurações', icon: Settings, group: 'espaco' },
+  { href: '/casos', label: 'Acompanhamento de casos', icon: Route, group: 'mais' },
+  { href: '/busca', label: 'Buscar', icon: Search, group: 'mais' },
+  { href: '/jornalista', label: 'Painel do Jornalista', icon: Newspaper, roles: ['jornalista'], group: 'redacao' },
+  { href: '/moderacao', label: 'Moderação', icon: Gavel, roles: ['moderador'], group: 'redacao' },
+  { href: '/admin', label: 'Admin', icon: LayoutDashboard, roles: ['admin'], group: 'redacao' },
 ];
 const BOTTOM = ['/', '/mapa', '/relatar', '/alertas'];
 
@@ -49,7 +48,7 @@ function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => 
         const count = n.badge ? badges[n.badge] : 0;
         return (
           <Link key={n.href} href={n.href} className={on ? 'nav-link on' : 'nav-link'} title={n.label} aria-label={count > 0 ? `${n.label}, ${count} novos` : n.label} aria-current={on ? 'page' : undefined} onClick={onNavigate}>
-            <span className="nav-icon"><Icon size={23} aria-hidden />{count > 0 && <span className="nav-badge">{count}<span className="sr-only"> novos</span></span>}</span>
+            <span className="nav-icon"><Icon size={26} strokeWidth={on ? 2.4 : 1.8} aria-hidden />{count > 0 && <span className="nav-badge">{count}<span className="sr-only"> novos</span></span>}</span>
             <span className="nav-label">{n.label}</span>
           </Link>
         );
@@ -75,16 +74,23 @@ function FullShell({ children }: { children: ReactNode }) {
     main.current?.focus({ preventScroll: true });
   }, [path]);
   return (
-    <div className="shell">
+    <div className={`shell ${prefs.navOpen ? 'nav-open' : 'nav-collapsed'}`}>
       <a className="skip" href="#conteudo">Pular para o conteúdo</a>
-      <nav className="side" aria-label="Principal">
+      <nav className="side" aria-label="Principal" onClick={(e) => { if (!prefs.navOpen && (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('side-links'))) setPrefs({ navOpen: true }); }}>
         <Link href="/" className="brand" aria-label="Amigo da Vizinhança, início"><Logo /><span className="brand-copy">Amigo da Vizinhança<small>Informação perto de você</small></span></Link>
+        <button type="button" className="nav-link nav-toggle" aria-expanded={!!prefs.navOpen} title={prefs.navOpen ? 'Recolher o menu' : 'Expandir o menu'} onClick={() => setPrefs({ navOpen: !prefs.navOpen })}>
+          <span className="nav-icon">{prefs.navOpen ? <PanelLeftClose size={24} strokeWidth={1.8} aria-hidden /> : <PanelLeftOpen size={24} strokeWidth={1.8} aria-hidden />}</span>
+          <span className="nav-label">{prefs.navOpen ? 'Recolher o menu' : 'Expandir o menu'}</span>
+        </button>
         <div className="side-links">
-          <div className="nav-group"><p className="nav-section-label">Descobrir</p><NavLinks items={items.filter((n) => NAV.indexOf(n) < 6)} /></div>
-          <div className="nav-group"><p className="nav-section-label">Seu espaço</p><NavLinks items={items.filter((n) => NAV.indexOf(n) >= 6 && !n.roles)} /></div>
-          {items.some((n) => n.roles) && <div className="nav-group"><p className="nav-section-label">Redação</p><NavLinks items={items.filter((n) => n.roles)} /></div>}
+          <div className="nav-group"><p className="nav-section-label">Descobrir</p><NavLinks items={items.filter((n) => n.group === 'descobrir')} /></div>
+          <div className="nav-group"><p className="nav-section-label">Seu espaço</p><NavLinks items={items.filter((n) => n.group === 'espaco')} /></div>
+          {items.some((n) => n.group === 'redacao') && <div className="nav-group"><p className="nav-section-label">Redação</p><NavLinks items={items.filter((n) => n.group === 'redacao')} /></div>}
         </div>
-        <div className="side-foot"><UserLine /><ProfileSwitcher /><p className="sample-note">Protótipo. Todo o conteúdo é de exemplo.</p></div>
+        <div className="side-foot">
+          <Link href="/perfil" className={`me-link ${path.startsWith('/perfil') ? 'on' : ''}`} aria-label={`Seu perfil: ${me.name}`} title="Seu perfil"><UserLine /></Link>
+          <ProfileSwitcher /><p className="sample-note">Protótipo. Todo o conteúdo é de exemplo.</p>
+        </div>
       </nav>
       <main id="conteudo" className="center" ref={main} tabIndex={-1}>{children}</main>
       <RightRail />
@@ -94,6 +100,7 @@ function FullShell({ children }: { children: ReactNode }) {
         <button type="button" className="nav-link" onClick={() => setMore(true)}><span className="nav-icon"><Menu size={23} aria-hidden /></span><span className="nav-label">Mais</span></button>
       </nav>
       <Modal open={more} onClose={() => setMore(false)} title="Menu">
+        <Link href="/perfil" className="me-link me-link-more" onClick={() => setMore(false)}><UserLine /><small>Ver perfil</small></Link>
         <div className="more-view" role="group" aria-label="Aparência">
           <button type="button" className="btn btn-outline" onClick={() => setFont(-0.1)} aria-label="Diminuir a letra">A−</button>
           <button type="button" className="btn btn-outline" onClick={() => setFont(0.1)} aria-label="Aumentar a letra">A+</button>

@@ -7,7 +7,8 @@ import { api, DomainError } from '@/services/http-api';
 
 export type Theme = 'dark' | 'light' | 'contrast';
 /** actorHandle: perfil de demonstração escolhido em "Ver o app como". */
-export interface Prefs { theme: Theme; font: number; simple: boolean; actorHandle: string; voice: 'neural' | 'navegador' }
+/** navOpen: menu lateral expandido (com nomes). Fechado, mostra só os ícones. */
+export interface Prefs { theme: Theme; font: number; simple: boolean; actorHandle: string; voice: 'neural' | 'navegador'; navOpen?: boolean }
 export interface Toast { id: number; kind: 'ok' | 'erro' | 'info'; text: string }
 export interface Speaking { id: string; text: string; loading?: boolean }
 

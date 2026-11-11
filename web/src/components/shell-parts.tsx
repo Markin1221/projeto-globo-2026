@@ -2,13 +2,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Check, CircleHelp, Moon, Radio, Sun, X, Contrast, ListChecks } from 'lucide-react';
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, CircleHelp, Moon, Radio, Sun, X, Contrast, ListChecks } from 'lucide-react';
 import { detectBairros, ROLE_LABEL } from '@/domain/rules';
 import { activeAlerts, bairroName, programById, trendingBairros, trendingTopics } from '@/domain/selectors';
 import { act, api, dismissLive, dismissToast, setFont, setGuideOpen, setPrefs, startLiveDemo, stopSpeaking, switchProfile, toast, useDb, useMe, useUi, type Theme } from '@/store';
 import { AlertRow } from './cards';
 import { Avatar, Button, Modal, SearchGlyph } from './ui';
-import { FollowButton } from './follow-button';
 
 export function ModeToggle() {
   const { prefs } = useUi();
@@ -69,35 +68,71 @@ function highlight(text: string, names: string[]) {
   return text.split(new RegExp(`(${pattern})`, 'gi')).map((p, i) => (i % 2 ? <mark key={i}>{p}</mark> : p));
 }
 
+/** Tarja do telejornal ao vivo. Vira um carrossel: primeiro o trecho no ar, depois as outras notícias do mesmo telejornal. */
 export function LiveBanner({ onOpen }: { onOpen?: (segmentId: string) => void }) {
   const db = useDb();
   const me = useMe();
   const { dismissedLive } = useUi();
   const live = db.live;
   const [, tick] = useState(0);
+  const [i, setI] = useState(0);
+  const [paused, setPaused] = useState(false);
   // Depois que o telejornal termina, a tarja fica 90 s na tela; o aviso continua nas notificações.
   useEffect(() => { if (!live?.finishedAt) return; const t = setTimeout(() => tick((x) => x + 1), Math.max(0, live.finishedAt + 90000 - Date.now()) + 50); return () => clearTimeout(t); }, [live?.finishedAt]);
+  const others = live ? db.segments.filter((s) => s.programId === live.programId && s.id !== live.segmentId).sort((a, b) => b.airedAt - a.airedAt).slice(0, 5) : [];
+  // No Modo Simples a tarja continua com um cartão só (menos coisa na tela).
+  const count = onOpen ? 1 : 1 + others.length;
+  // Passa sozinho a cada 7 s, menos com o mouse ou o foco em cima, ou com "reduzir movimento" ligado.
+  useEffect(() => {
+    if (count < 2 || paused) return;
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const t = setTimeout(() => setI((x) => (x + 1) % count), 7000);
+    return () => clearTimeout(t);
+  }, [i, count, paused]);
+  useEffect(() => { setI(0); }, [live?.segmentId]);
   if (!live?.detectedAt || dismissedLive === live.segmentId) return null;
   if (live.finishedAt && Date.now() - live.finishedAt > 90000) return null;
   const name = bairroName(db, live.bairroId);
-  const program = programById(db, live.programId)?.name;
+  const program = programById(db, live.programId)?.name ?? 'Telejornal';
   const line = live.lines[live.shown - 1]?.text ?? '';
-  const href = `/trecho/${live.segmentId}`;
   const personal = me.followed.includes(live.bairroId);
+  const cur = Math.min(i, count - 1);
+  const other = cur > 0 ? others[cur - 1] : null;
+  const go = (d: number) => setI((x) => (x + d + count) % count);
   return (
-    <div className="tarja" role="alert">
+    <div className="tarja" role="region" aria-roledescription="carrossel" aria-label={`Notícias do ${program}`}
+      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
       <div className="tarja-program"><span className="live-chip"><b className="live-dot" />{live.finished ? 'Exibido' : 'Ao vivo'}</span><strong>{program}</strong></div>
-      <div className="tarja-body">
-        <p className="tarja-title">{personal ? 'Seu bairro está no ar agora' : `${name} está no ar agora`}: {name}</p>
-        <p className="tarja-line" key={live.shown}>{highlight(line, [name])}</p>
+      <div className="tarja-body" key={cur} aria-live={paused ? 'polite' : 'off'}>
+        {other ? (
+          <>
+            <p className="tarja-kicker">Também no {program}, {bairroNames(db, other.bairroIds)}</p>
+            <p className="tarja-title tarja-title-sm">{other.title}</p>
+          </>
+        ) : (
+          <>
+            <p className="tarja-title" role="alert">{personal ? 'Seu bairro está no ar agora' : `${name} está no ar agora`}: {name}</p>
+            <p className="tarja-line" key={live.shown}>{highlight(line, [name])}</p>
+          </>
+        )}
+        {count > 1 && (
+          <div className="tarja-dots" role="group" aria-label="Escolher notícia">
+            {Array.from({ length: count }, (_, k) => <button key={k} type="button" className={k === cur ? 'on' : ''} aria-label={`Notícia ${k + 1} de ${count}`} aria-current={k === cur ? 'true' : undefined} onClick={() => setI(k)} />)}
+          </div>
+        )}
       </div>
       <div className="tarja-acts">
-        {onOpen ? <button type="button" className="tarja-link" onClick={() => onOpen(live.segmentId)}>Ouvir agora</button> : <Link className="tarja-link" href={href}>Ver o trecho</Link>}
+        {count > 1 && <button type="button" className="icon-btn" aria-label="Notícia anterior" onClick={() => go(-1)}><ChevronLeft size={18} aria-hidden /></button>}
+        {count > 1 && <button type="button" className="icon-btn" aria-label="Próxima notícia" onClick={() => go(1)}><ChevronRight size={18} aria-hidden /></button>}
+        {onOpen ? <button type="button" className="tarja-link" onClick={() => onOpen(live.segmentId)}>Ouvir agora</button>
+          : <Link className="tarja-link" href={`/trecho/${other ? other.id : live.segmentId}`}>Ver o trecho</Link>}
+        {!onOpen && <Link className="tarja-all" href={`/telejornais/${live.programId}`}>Todas do {program}</Link>}
         <button type="button" className="icon-btn" aria-label="Fechar alerta" onClick={() => dismissLive(live.segmentId)}><X size={18} aria-hidden /></button>
       </div>
     </div>
   );
 }
+const bairroNames = (db: ReturnType<typeof useDb>, ids: string[]) => ids.map((b) => bairroName(db, b)).join(' e ');
 
 export function Toasts() {
   const { toasts } = useUi();
@@ -123,7 +158,6 @@ export function RightRail() {
   const [q, setQ] = useState('');
   const live = db.live;
   const alerts = activeAlerts(db, me.followed.length ? me.followed : undefined).slice(0, 3);
-  const suggestions = db.bairros.filter((b) => b.active && !me.followed.includes(b.id)).slice(0, 4);
   return (
     <aside className="rail" aria-label="Destaques">
       <form role="search" className="rail-search" onSubmit={(e) => { e.preventDefault(); router.push(`/busca?q=${encodeURIComponent(q)}`); }}>
@@ -142,10 +176,8 @@ export function RightRail() {
       <section className="rail-box" aria-labelledby="rt"><h2 id="rt">Em alta nos bairros</h2>
         <ol className="trend">{trendingBairros(db).slice(0, 4).map((t) => <li key={t.bairro.id}><Link href={`/bairro/${t.bairro.id}`}><strong>{t.bairro.name}</strong><small>{t.news} notícias, {t.reports} relatos</small></Link></li>)}</ol>
         <p className="topics">{trendingTopics(db).slice(0, 4).map((t) => <Link key={t.topic} href={`/busca?q=${encodeURIComponent(t.label)}`} className="chip">{t.label}</Link>)}</p>
+        <Link className="more-link" href="/casos">Acompanhar os casos dos bairros</Link>
       </section>
-      {me.role !== 'visitante' && <section className="rail-box" aria-labelledby="rb"><h2 id="rb">Bairros para seguir</h2>
-        <ul className="follow-list">{suggestions.map((b) => <li key={b.id}><Link href={`/bairro/${b.id}`}>{b.name}<small>{b.region}</small></Link><FollowButton bairroId={b.id} /></li>)}</ul>
-      </section>}
     </aside>
   );
 }

@@ -22,24 +22,27 @@
   color-scheme: light;
 }
 [data-theme='dark'] {
-  --bg: #111c1c;
-  --surface: #192727;
-  --surface-2: #233434;
-  --line: #354846;
-  --text: #eef5f2;
-  --muted: #acbdb7;
-  --accent: #227d6c;
-  --accent-text: #8fd6bd;
-  --accent-soft: #213e35;
-  --mark: #f5ce73;
-  --on-mark: #352907;
-  --relato-bg: #302a1b;
-  --relato-line: #c99d49;
-  --relato-text: #fff0cd;
-  --relato-muted: #deca9f;
-  --m0: #243a33; --m1: #315c48; --m2: #3e8564; --m3: #60af88; --m4: #9ed4b4;
-  --sea: #172c32; --land: #243530;
-  --shadow: 0 3px 14px #0000000d;
+  /* Escuro no padrão do Threads: quase preto, cinzas neutros, pouco contraste nas bordas e no texto secundário. */
+  --bg: #101010;
+  --surface: #181818;
+  --surface-2: #222222;
+  --line: #2d2d2d;
+  --text: #f3f5f7;
+  --muted: #a0a0a0;
+  --accent: #2e8f7a;
+  --accent-text: #86d1b9;
+  --accent-soft: #1d2624;
+  --on-accent: #ffffff;
+  --mark: #e9c46a;
+  --on-mark: #231b05;
+  --relato-bg: #221f18;
+  --relato-line: #9c8146;
+  --relato-text: #efe4c8;
+  --relato-muted: #c7b994;
+  --green-soft: #17271f; --red-soft: #2c191c;
+  --m0: #262626; --m1: #23413a; --m2: #2d6656; --m3: #3f977d; --m4: #86d1b9;
+  --sea: #141414; --land: #1c1c1c;
+  --shadow: none;
   color-scheme: dark;
 }
 [data-theme='contrast'] {
@@ -279,4 +282,120 @@ input:not([type='checkbox'], [type='radio'], [type='range']):hover, select:hover
 @media (max-width: 640px) {
   .simple .s-top-acts .btn { font-size: 1.1rem; min-height: 56px; padding: 10px 8px; white-space: nowrap; }
   .simple .s-top-hint { font-size: .92rem; }
+}
+
+/* Telejornais: um carrossel por programa. */
+.onair-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 18px 28px; border-bottom: 1px solid var(--line); }
+.onair-strip p { flex: 1 1 260px; font-size: .9rem; }
+.onair-strip a { color: var(--accent-text); text-decoration: underline; }
+.carousel { display: flex; flex-direction: column; gap: 12px; padding: 24px 0 26px; border-bottom: 1px solid var(--line); }
+.carousel-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 0 28px; }
+.carousel-head h2 { font-size: 1.2rem; }
+.carousel-head .muted { font-size: .8rem; }
+.carousel-ctrl { display: flex; gap: 6px; }
+.carousel-ctrl .icon-btn { border: 1px solid var(--line); background: var(--surface); }
+.carousel-track { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 28px; padding: 2px 28px 8px; scrollbar-width: thin; overscroll-behavior-x: contain; }
+.carousel-track:focus-visible { outline-offset: -3px; }
+.slide { flex: 0 0 min(300px, 78%); scroll-snap-align: start; }
+.slide-link { display: flex; flex-direction: column; gap: 8px; height: 100%; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.slide-link:hover { border-color: var(--muted); }
+.slide-meta { display: flex; justify-content: space-between; gap: 8px; font-size: .74rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.slide h3 { font-size: 1rem; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.slide-text { font-size: .84rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.slide-place { margin-top: auto; display: flex; align-items: center; gap: 4px; font-size: .76rem; color: var(--accent-text); }
+.carousel-all { align-self: flex-start; margin: 0 28px; }
+.carousel-empty { padding: 0 28px; }
+/* Perfil no canto inferior esquerdo. */
+.me-link { display: block; border-radius: 10px; padding: 6px; margin: -6px; }
+.me-link:hover, .me-link.on { background: var(--accent-soft); }
+.me-link-more { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 12px; padding: 10px; border: 1px solid var(--line); }
+.me-link-more small { color: var(--accent-text); font-weight: 600; }
+@media (max-width: 1160px) {
+  .side-foot .user-line div, .side-foot .profile-switch, .side-foot .sample-note { display: none; }
+  .side-foot { align-items: center; }
+}
+@media (max-width: 640px) {
+  .onair-strip { padding: 16px 20px; }
+  .carousel-head { padding: 0 20px; }
+  .carousel-ctrl { display: none; }
+  .carousel-track { padding: 2px 20px 8px; scroll-padding: 0 20px; }
+  .carousel-all { margin: 0 20px; }
+  .carousel-empty { padding: 0 20px; }
+}
+
+
+/* ---------- Menu lateral no estilo Threads: só ícones, expande se a pessoa quiser ---------- */
+.nav-link svg { width: 26px; height: 26px; stroke-width: 1.8; }
+.nav-link.on svg { stroke-width: 2.4; color: var(--text); }
+.nav-link { color: var(--muted); }
+.nav-link.on { color: var(--text); background: transparent; }
+.nav-link:hover { background: var(--surface-2); color: var(--text); }
+.nav-badge { top: -4px; right: -6px; min-width: 16px; font-size: .62rem; padding: 2px 4px; background: #ff3040; color: #fff; }
+.nav-toggle { margin-bottom: 18px; }
+.nav-toggle svg { width: 24px; height: 24px; }
+.nav-open .side .nav-link.on { background: var(--surface-2); }
+
+@media (min-width: 1161px) {
+  /* O menu fica preso na borda esquerda, aberto ou fechado, e anima a largura. O feed desliza junto. */
+  .shell.nav-collapsed, .shell.nav-open { --side-w: 76px; max-width: none; margin: 0; padding: 0 24px 0 calc(var(--side-w) + 24px); grid-template-columns: minmax(0, 780px) 340px; justify-content: center; transition: padding-left .28s cubic-bezier(.2, .7, .2, 1); }
+  .shell.nav-open { --side-w: 264px; }
+  .shell .side { position: fixed; left: 0; top: 0; bottom: 0; z-index: 25; width: var(--side-w); height: 100vh; padding: 22px 10px 18px; align-items: stretch; border-right: 1px solid var(--line); background: var(--bg); overflow-x: hidden; overflow-y: auto; scrollbar-width: none; transition: width .28s cubic-bezier(.2, .7, .2, 1); }
+  .shell .side::-webkit-scrollbar { display: none; }
+  /* Ícones sempre na mesma posição; os nomes aparecem e somem sem pular. */
+  .shell .side .brand { padding: 0 7px 18px; gap: 12px; white-space: nowrap; }
+  .shell .side .nav-link { width: 100%; height: 50px; padding: 0 15px; gap: 14px; justify-content: flex-start; border-radius: 12px; white-space: nowrap; }
+  .shell .side .nav-label, .shell .side .brand-copy, .shell .side .nav-section-label { transition: opacity .2s ease; }
+  .shell .side .nav-section-label { white-space: nowrap; padding: 0 15px 6px; }
+  .shell .side .side-links { gap: 16px; padding-bottom: 12px; }
+  .shell .side .nav-group { gap: 2px; }
+  .shell .side .nav-group + .nav-group { border-top: 0; padding-top: 0; }
+  .shell .side .nav-toggle { margin-bottom: 10px; }
+  .shell .side .side-foot { display: flex; padding: 12px 6px 0; border-top: 1px solid var(--line); }
+  .shell .side .me-link { margin: 0; padding: 4px; }
+  .shell .side .user-line { white-space: nowrap; }
+  .nav-collapsed .side { cursor: pointer; }
+  .nav-collapsed .side .nav-label, .nav-collapsed .side .brand-copy, .nav-collapsed .side .nav-section-label, .nav-collapsed .side .user-line div { opacity: 0; pointer-events: none; }
+  .nav-collapsed .side .nav-section-label { height: 0; padding-bottom: 0; overflow: hidden; }
+  .nav-collapsed .side .profile-switch, .nav-collapsed .side .sample-note { display: none; }
+  .nav-collapsed .side .side-foot { border-top: 0; }
+  .nav-collapsed .side .nav-link, .nav-collapsed .side .side-links { cursor: pointer; }
+  .shell .side .nav-link.on { background: var(--surface-2); }
+}
+@media (min-width: 1161px) and (prefers-reduced-motion: reduce) {
+  .shell, .shell .side, .shell .side * { transition: none !important; }
+}
+/* Sem barra de rolagem na coluna da direita (a rolagem continua funcionando). */
+.rail { scrollbar-width: none; }
+.rail::-webkit-scrollbar { display: none; }
+
+/* O feed fica num cartão de cantos arredondados sobre o fundo, como no Threads. */
+@media (min-width: 641px) {
+  .center { border: 1px solid var(--line); border-radius: 28px 28px 0 0; margin-top: 14px; overflow: clip; min-height: calc(100vh - 14px); }
+  .page-head { border-bottom-color: var(--line); }
+}
+[data-theme='dark'] .center, [data-theme='dark'] .rail-box, [data-theme='dark'] .rail-search { background: var(--surface); }
+
+@media (max-width: 1160px) {
+  .nav-toggle { display: none; }
+  .side-foot { display: flex; }
+}
+@media (max-width: 640px) {
+  .bottom .nav-link svg { width: 24px; height: 24px; }
+  .bottom .nav-link.on { background: transparent; }
+  .bottom .nav-link.on .nav-label { color: var(--text); font-weight: 700; }
+}
+
+/* Tarja do ao vivo em carrossel. */
+.tarja { width: min(820px, calc(100vw - 24px)); }
+.tarja-body { display: flex; flex-direction: column; justify-content: center; gap: 2px; animation: fade .3s; }
+.tarja-kicker { font-size: .78rem; font-weight: 700; color: #b30e29; text-transform: uppercase; letter-spacing: .04em; }
+.tarja-title-sm { font-size: 1.25rem; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tarja-dots { display: flex; gap: 5px; margin-top: 4px; }
+.tarja-dots button { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: #c9ced8; cursor: pointer; }
+.tarja-dots button.on { width: 18px; border-radius: 4px; background: #c8102e; }
+.tarja-all { padding: 8px 10px; font: 700 .95rem 'Barlow Condensed', sans-serif; color: #141b28; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+@media (max-width: 640px) {
+  .tarja-acts { flex-wrap: nowrap; }
+  .tarja-all { padding: 8px 6px; }
+  .tarja-title-sm { font-size: 1.1rem; }
 }

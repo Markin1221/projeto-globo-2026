@@ -1,24 +1,28 @@
 'use client';
-import { useState } from 'react';
-import { EntryCard } from '@/components/cards';
+import Link from 'next/link';
+import { ProgramCarousel } from '@/components/program-carousel';
 import { PageHeader, SimulateLiveButton } from '@/components/shell-parts';
-import { EmptyState, PageState, Tabs } from '@/components/ui';
-import { officialFeed } from '@/domain/selectors';
+import { PageState } from '@/components/ui';
+import { programById } from '@/domain/selectors';
 import { usePageLoad, useDb } from '@/store';
 
 export default function ProgramsPage() {
   const db = useDb();
   const { state, retry } = usePageLoad('telejornais');
-  const [tab, setTab] = useState('todos');
-  const programs = db.programs.filter((p) => p.active);
-  const list = officialFeed(db).filter((e) => e.kind === 'segment' && (tab === 'todos' || e.item.programId === tab));
+  const programs = db.programs.filter((p) => p.active && p.kind !== 'portal');
+  const byProgram = (id: string) => db.segments.filter((s) => s.programId === id).sort((a, b) => b.airedAt - a.airedAt);
+  const live = db.live && !db.live.finished ? db.live : null;
   return (
     <>
       <PageHeader title="Telejornais" />
-      <Tabs label="Programas" value={tab} onChange={setTab} tabs={[{ id: 'todos', label: 'Todos' }, ...programs.map((p) => ({ id: p.id, label: p.name }))]} />
       <PageState state={state} retry={retry}>
-        <div className="row between pad"><p className="muted">{tab === 'todos' ? 'Cada trecho tem transcrição automática e bairros detectados.' : programs.find((p) => p.id === tab)?.schedule}</p><SimulateLiveButton /></div>
-        {list.length ? <div className="feed">{list.map((e) => <EntryCard key={e.item.id} entry={e} />)}</div> : <EmptyState title="Nenhum trecho deste programa ainda" text="Os trechos aparecem assim que o programa for transcrito." />}
+        <div className="onair-strip">
+          {live
+            ? <p><span className="live-chip"><b className="live-dot" />{programById(db, live.programId)?.name} ao vivo</span> {live.lines[live.shown - 1]?.text} <Link href={`/trecho/${live.segmentId}`}>Abrir transcrição</Link></p>
+            : <p className="muted">Nenhum telejornal no ar agora. Cada trecho tem transcrição e os bairros citados.</p>}
+          <SimulateLiveButton />
+        </div>
+        {programs.map((p) => <ProgramCarousel key={p.id} program={p} segments={byProgram(p.id)} />)}
       </PageState>
     </>
   );
