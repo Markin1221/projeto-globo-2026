@@ -125,7 +125,9 @@ Preencha `INGEST_API_KEY` no `.env` e rode `docker compose --profile scraper up 
 
 ## Mapa
 
-O mapa usa OpenStreetMap (camada da CARTO) e mostra cada bairro colorido pelo volume de notícias. Há Recife, Olinda e Jaboatão no exemplo; outras cidades entram pela tabela `cities`. Sem limites importados, cada bairro aparece como círculo no centro aproximado. Para os limites reais, use `api/scripts/importar-limites.mjs` com o GeoJSON da prefeitura (veja `docs/INGESTAO.md`).
+O mapa usa a camada padrão de ruas do OpenStreetMap, sem chave de API, e mostra cada bairro colorido pelo volume de notícias. A base com ruas, rios e pontos de referência permanece clara em todos os temas para facilitar a localização, com escala em metros/quilômetros. Há Recife, Olinda e Jaboatão no exemplo; outras cidades entram pela tabela `cities`. Sem limites importados, cada bairro aparece como círculo no centro aproximado. Para os limites reais, use `api/scripts/importar-limites.mjs` com o GeoJSON da prefeitura (veja `docs/INGESTAO.md`).
+
+As imagens são carregadas diretamente pelo navegador, com atribuição visível e cache normal, conforme a [política de uso do OpenStreetMap](https://operations.osmfoundation.org/policies/tiles/). O serviço público não tem garantia de disponibilidade; antes de uma implantação de grande volume, escolha um provedor com capacidade adequada. Não faça download em massa nem pré-carregamento para uso offline.
 
 ## IA para os resumos
 

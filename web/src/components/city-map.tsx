@@ -1,5 +1,5 @@
 'use client';
-// Mapa real (OpenStreetMap via CARTO) com os bairros sobrepostos, coloridos pelo volume de notícias.
+// Mapa de ruas do OpenStreetMap com os bairros sobrepostos pelo volume de notícias.
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type * as Leaflet from 'leaflet';
@@ -22,10 +22,10 @@ export function CityMap({ db, city, mode, label, height = 460 }: { db: Db; city?
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<Leaflet.Map | null>(null);
   const layer = useRef<Leaflet.LayerGroup | null>(null);
-  const tiles = useRef<Leaflet.TileLayer | null>(null);
   const L = useRef<typeof Leaflet | null>(null);
   const router = useRouter();
-  const { prefs } = useUi();
+  // Atualiza as cores dos bairros quando o usuário troca o tema.
+  useUi();
   const [ready, setReady] = useState(false);
   const modeRef = useRef(mode);
   modeRef.current = mode;
@@ -41,6 +41,13 @@ export function CityMap({ db, city, mode, label, height = 460 }: { db: Db; city?
       if (!alive || !el.current || map.current) return;
       L.current = mod;
       const m = mod.map(el.current, { zoomControl: true, scrollWheelZoom: false, attributionControl: true });
+      // A base fica montada durante toda a visita; atualizações dos bairros não
+      // devem recriar as imagens nem repetir pedidos ao provedor.
+      mod.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(m);
+      mod.control.scale({ imperial: false }).addTo(m);
       m.on('click', (e: Leaflet.LeafletMouseEvent) => {
         const md = modeRef.current;
         if (md.kind !== 'pick') return;
@@ -59,11 +66,6 @@ export function CityMap({ db, city, mode, label, height = 460 }: { db: Db; city?
   function draw() {
     const mod = L.current, m = map.current, g = layer.current;
     if (!mod || !m || !g) return;
-    const dark = prefs.theme !== 'light';
-    tiles.current?.remove();
-    tiles.current = mod.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`, {
-      subdomains: 'abcd', maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    }).addTo(m);
     g.clearLayers();
     const md = modeRef.current;
     const colors = [0, 1, 2, 3, 4].map((i) => cssVar(`--m${i}`));

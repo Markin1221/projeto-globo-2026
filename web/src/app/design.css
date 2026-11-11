@@ -181,6 +181,17 @@ input:not([type='checkbox'], [type='radio'], [type='range']):hover, select:hover
 .filters, .themes, .admin-grid { padding: 20px 28px; gap: 18px; }
 .case-card { margin: 12px 28px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; gap: 14px; }
 .case-card-link h3 { font-size: 1.1rem; }
+.city-map .map-label span {
+  color: #1d302f;
+  background: #fffffff0;
+  border: 1px solid #dce4df;
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-family: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  text-shadow: none;
+}
 .case-inline, .triage, .desk-box, .group-card, .kpis div { border-radius: 10px; }
 .modal { border-radius: 16px; background: var(--surface); box-shadow: 0 24px 80px #00000030; }
 .modal::backdrop { background: #0d25275e; backdrop-filter: blur(4px); }
