@@ -43,7 +43,7 @@
   color-scheme: dark;
 }
 [data-theme='contrast'] {
-  --accent-soft: #1a1a1a;
+  --accent-soft: #1c2a44;
   --shadow: none;
 }
 
@@ -273,4 +273,10 @@ input:not([type='checkbox'], [type='radio'], [type='range']):hover, select:hover
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
+}
+
+/* Modo Simples: os dois botões do topo cabem lado a lado no celular. */
+@media (max-width: 640px) {
+  .simple .s-top-acts .btn { font-size: 1.1rem; min-height: 56px; padding: 10px 8px; white-space: nowrap; }
+  .simple .s-top-hint { font-size: .92rem; }
 }

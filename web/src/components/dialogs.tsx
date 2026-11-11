@@ -71,7 +71,7 @@ function drawShareCard(c: HTMLCanvasElement, r: Relato, bairro: string) {
   x.fillStyle = '#FFD23F'; x.font = '700 36px "Atkinson Hyperlegible Next", sans-serif';
   wrap(x, INFORMAL_WARNING, 60, 890, 960, 48);
   x.fillStyle = '#FFFFFF'; x.font = '400 28px "Atkinson Hyperlegible Next", sans-serif';
-  x.fillText('Bairro em Pauta. Conteúdo de exemplo.', 60, 1044);
+  x.fillText('Amigo da Vizinhança. Conteúdo de exemplo.', 60, 1044);
 }
 
 export function ShareRelatoDialog({ relato, open, onClose }: { relato: Relato; open: boolean; onClose: () => void }) {

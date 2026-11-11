@@ -1,4 +1,4 @@
--- Bairro em Pauta: schema inicial (PostgreSQL 14+).
+-- Amigo da Vizinhança: schema inicial (PostgreSQL 14+).
 -- Convenções: nomes em snake_case; chaves naturais em texto (slug) para o que é configuração
 -- (cidades, bairros, fontes, temas) e UUID para o que é conteúdo gerado; datas sempre em timestamptz.
 

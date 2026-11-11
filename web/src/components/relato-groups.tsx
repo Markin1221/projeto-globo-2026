@@ -3,19 +3,21 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { AlertOctagon, ChevronDown, ChevronUp, Layers, Sparkles } from 'lucide-react';
-import { INFORMAL_SEAL, SPEECH_PREFIX } from '@/domain/rules';
+import { canEditCases, INFORMAL_SEAL, SPEECH_PREFIX } from '@/domain/rules';
 import { bairroName } from '@/domain/selectors';
 import type { RelatoGroup, RelatoSummary } from '@/domain/types';
-import { api, useDb } from '@/store';
+import { api, useDb, useMe } from '@/store';
 import { ListenButton, RelatoCard } from './cards';
 import { TriageChips } from './triage';
 import { Button, EmptyState, InformalSeal, agoText } from './ui';
 
+const UTIL_LABEL = { alta: 'Útil', media: 'Média', baixa: 'Pouco útil' } as const;
 const SUMMARY_PREFIX = 'Atenção: resumo de relatos de moradores, ainda não verificados e que podem ser falsos.';
 
 /** Botão + cartão de resumo. groupId: resume um grupo. Sem groupId: resumo geral (opcionalmente de alguns bairros). */
 export function SummaryCard({ groupId, bairroIds, label, compact }: { groupId?: string; bairroIds?: string[]; label: string; compact?: boolean }) {
   const db = useDb();
+  const staff = canEditCases(useMe());
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
   const [error, setError] = useState('');
   const [data, setData] = useState<RelatoSummary | null>(null);
@@ -31,12 +33,12 @@ export function SummaryCard({ groupId, bairroIds, label, compact }: { groupId?: 
         <Button variant={compact ? 'outline' : 'primary'} busy={state === 'loading'} onClick={run}>
           <Sparkles size={16} aria-hidden />{state === 'loading' ? 'Resumindo' : label}
         </Button>
-        {!compact && <small className="muted">{db.meta.ai ? 'Resumo gerado por IA a partir dos relatos.' : 'Resumo automático a partir dos relatos.'} Os relatos não foram verificados.</small>}
+        {!compact && <small className="muted">{staff ? 'Versão da redação: todos os relatos, com a utilidade de cada um.' : 'Um resumo curto do que os vizinhos estão dizendo.'} {db.meta.ai ? 'Feito por IA.' : 'Automático.'} Os relatos não foram verificados.</small>}
         {state === 'error' && <small className="err" role="alert">{error}</small>}
       </div>
     );
   }
-  const speech = [SUMMARY_PREFIX, data.title + '.', data.summary, ...data.points, ...data.urgent.map((u) => `Pode ser urgente: ${u.text}. ${u.reason}`), data.advice ?? ''].join(' ');
+  const speech = [SUMMARY_PREFIX, data.title + '.', data.summary, ...data.points, ...(data.items ?? []).map((i) => `${i.text}. Utilidade ${i.util}.`), ...(data.checks ?? []), ...data.urgent.map((u) => `Pode ser urgente: ${u.text}. ${u.reason}`), data.advice ?? ''].join(' ');
   return (
     <section className="sum-card" aria-label={`Resumo: ${data.title}`}>
       <div className="sum-head">
@@ -55,6 +57,20 @@ export function SummaryCard({ groupId, bairroIds, label, compact }: { groupId?: 
             </li>
           ))}</ul>
         </div>
+      )}
+      {data.items && data.items.length > 0 && (
+        <div className="sum-items">
+          <h4>Relato por relato <small className="muted">(utilidade para a apuração, não é verdade)</small></h4>
+          <ul>{data.items.map((it) => (
+            <li key={it.relatoId}>
+              <span className={`tri util-${it.util}`}>{UTIL_LABEL[it.util]}</span>
+              <span><Link href={`/relatos/${it.relatoId}`}>{it.text}</Link> <small className="muted">{it.why}</small></span>
+            </li>
+          ))}</ul>
+        </div>
+      )}
+      {data.checks && data.checks.length > 0 && (
+        <div className="sum-checks"><h4>O que checar antes de publicar</h4><ul>{data.checks.map((c) => <li key={c}>{c}</li>)}</ul></div>
       )}
       {data.advice && <p className="sum-advice">{data.advice}</p>}
       <p className="sum-foot">Baseado em {data.relatoCount} {data.relatoCount === 1 ? 'relato' : 'relatos'} de moradores, {INFORMAL_SEAL.toLowerCase()}. {data.engine === 'ia' ? 'Texto gerado por IA: pode conter erros.' : ''} {data.note ?? ''}</p>

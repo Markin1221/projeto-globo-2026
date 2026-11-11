@@ -89,6 +89,17 @@ Cuidados embutidos:
 - O resumo leva o selo de não verificado, e a leitura em voz alta começa pelo aviso obrigatório.
 - Cada resumo fica guardado (`ai_summaries`) e só é refeito quando chega relato novo, muda um status ou muda o número de confirmações. Há também um limite de 10 resumos novos por minuto por endereço (`AI_RATE_PER_MIN`), para controlar o custo.
 
+## Resumos: morador vê o mínimo, redação vê tudo
+
+A API decide pelo perfil de quem pede (não dá para pedir a versão da redação sendo morador):
+
+| | Morador e visitante | Jornalista e admin |
+| --- | --- | --- |
+| Resumo do dia | "Hoje em ...": uma chamada de até 20 palavras e o botão "Assistir o trecho do NE1". A ideia é dar vontade de ver o telejornal, sem contar o desfecho. Alertas de segurança aparecem inteiros, nunca como mistério. | "Panorama do dia": cada notícia e alerta, com fonte e há quanto tempo, e "Possíveis pautas" (relatos não verificados sem cobertura, bairro há dias fora da TV, alerta sem matéria). |
+| Resumo dos relatos | Título, uma frase e o que pode ser urgente. | Panorama, pontos, cada relato com a utilidade para a apuração (útil, média, pouco útil, com o motivo) e o que checar antes de publicar. Utilidade não é verdade: o relato continua não verificado. |
+
+Sem IA, o resumo automático segue as mesmas regras. Cada versão tem o seu cache.
+
 ## 6. Resumo do dia do bairro (`ai.ts`, `POST /api/resumos/dia`)
 
 Aparece no topo do Início e da página de cada bairro. Usa só fontes oficiais: trechos de telejornal e matérias das últimas 48 horas (ou as 4 mais recentes, se o bairro estiver parado) e até 4 alertas ativos. Relatos de moradores nunca entram. A IA devolve 3 frases curtas. O resultado fica guardado por dia (horário do Recife) e é refeito quando entra notícia ou alerta novo no bairro. Enquanto a IA responde, a tela mostra o resumo automático; se ela falhar, o automático fica, com a etiqueta "Resumo automático".

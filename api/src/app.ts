@@ -7,6 +7,7 @@ import { dropAll, migrate, q, tx } from './db';
 import { ingestNews, ingestRuns, knownUrls, recomputeAll, type IngestBody } from './ingest';
 import { trainAll } from './ml/models';
 import { summarize, summarizeDay } from './ai';
+import { canEditCases } from '../../shared/domain/rules';
 import { withTriage } from './ml/triage-run';
 import { DEMO_MODE, loadUser, snapshot, UUID } from './repo';
 import { seedDatabase } from './seed/load';
@@ -86,6 +87,8 @@ class AppController {
    */
   @Post('resumos') @HttpCode(200) async resumo(@Req() r: Request, @Body() b: { groupId?: string; bairroIds?: string[] }) {
     const v = await viewer(r);
+    // Quem lê decide o tamanho: morador vê o essencial; jornalista e admin veem tudo, para decidir se há pauta.
+    const audience = v && canEditCases(v) ? 'redacao' as const : 'morador' as const;
     const db = await snapshot(v, null);
     const listed = db.relatos.filter((x) => x.status !== 'falso' && Date.now() - x.createdAt < 7 * 864e5);
     const name = (id: string) => db.bairros.find((x) => x.id === id)?.name ?? id;
@@ -93,32 +96,41 @@ class AppController {
     if (b?.groupId) {
       const g = db.relatoGroups.find((x) => x.id === b.groupId);
       if (!g) throw S.bad('Grupo não encontrado. A lista pode ter mudado; recarregue a página.');
-      input = { scope: 'grupo' as const, label: g.title, relatos: db.relatos.filter((x) => g.relatoIds.includes(x.id)), groups: [g], bairros: db.bairros };
+      input = { scope: 'grupo' as const, label: g.title, relatos: db.relatos.filter((x) => g.relatoIds.includes(x.id)), groups: [g], bairros: db.bairros, audience };
     } else {
       const ids = Array.isArray(b?.bairroIds) ? b.bairroIds.filter((x) => typeof x === 'string').slice(0, 30) : [];
       const rel = (ids.length ? listed.filter((x) => ids.includes(x.bairroId)) : listed).sort((a, c) => c.createdAt - a.createdAt).slice(0, 40);
       const groups = db.relatoGroups.filter((g) => g.relatoIds.some((id) => rel.some((x) => x.id === id)));
-      input = { scope: 'geral' as const, label: ids.length ? `O que dizem os moradores de ${ids.map(name).slice(0, 3).join(', ')}` : 'O que os moradores estão dizendo', relatos: rel, groups, bairros: db.bairros };
+      input = { scope: 'geral' as const, label: ids.length ? `O que dizem os moradores de ${ids.map(name).slice(0, 3).join(', ')}` : 'O que os moradores estão dizendo', relatos: rel, groups, bairros: db.bairros, audience };
     }
     return summarize(input, r.ip ?? 'desconhecido');
   }
 
   /** Resumo do dia de um bairro: telejornais, portal e alertas (sem relatos não verificados). */
   @Post('resumos/dia') @HttpCode(200) async resumoDia(@Req() r: Request, @Body() b: { bairroId: string }) {
-    const db = await snapshot(null, null);
+    const v = await viewer(r);
+    const audience = v && canEditCases(v) ? 'redacao' as const : 'morador' as const;
+    const db = await snapshot(audience === 'redacao' ? v : null, null);
     const bairro = db.bairros.find((x) => x.id === b?.bairroId);
     if (!bairro) throw S.bad('Bairro não encontrado.');
     const prog = (id: string) => db.programs.find((p) => p.id === id)?.name ?? 'Telejornal';
     const items = [
-      ...db.segments.filter((s) => s.bairroIds.includes(bairro.id)).map((s) => ({ at: s.airedAt, tipo: 'telejornal' as const, fonte: prog(s.programId), titulo: s.title, resumo: s.summary, oQueMuda: s.whatChanges.slice(0, 3), utilidade: s.utility })),
-      ...db.articles.filter((a) => a.bairroIds.includes(bairro.id)).map((a) => ({ at: a.publishedAt, tipo: 'portal' as const, fonte: a.originRelatoId ? 'redação (relato confirmado)' : (db.programs.find((p) => p.id === a.sourceId)?.name ?? 'portal'), titulo: a.title, resumo: a.lead, oQueMuda: [] as string[], utilidade: a.utility })),
+      ...db.segments.filter((s) => s.bairroIds.includes(bairro.id)).map((s) => ({ at: s.airedAt, kind: 'segment' as const, id: s.id, tipo: 'telejornal' as const, fonte: prog(s.programId), titulo: s.title, resumo: s.summary, oQueMuda: s.whatChanges.slice(0, 3), utilidade: s.utility })),
+      ...db.articles.filter((a) => a.bairroIds.includes(bairro.id)).map((a) => ({ at: a.publishedAt, kind: 'article' as const, id: a.id, tipo: 'portal' as const, fonte: a.originRelatoId ? 'redação (relato confirmado)' : (db.programs.find((p) => p.id === a.sourceId)?.name ?? 'portal'), titulo: a.title, resumo: a.lead, oQueMuda: [] as string[], utilidade: a.utility })),
     ].sort((x, y) => y.at - x.at);
     const recent = items.filter((x) => Date.now() - x.at < 48 * 3600e3);
     const stale = recent.length === 0;
-    const news = (stale ? items.slice(0, 4) : recent.slice(0, 8)).map(({ at, ...x }) => ({ ...x, haHoras: Math.round((Date.now() - at) / 36e5) }));
-    const alerts = db.alerts.filter((a) => a.bairroId === bairro.id).slice(0, 4).map((a) => ({ titulo: a.title, detalhe: a.detail, tipo: a.type, gravidade: a.severity, fonte: a.source }));
-    return summarizeDay(bairro.id, { bairro: bairro.name, news, alerts, stale }, r.ip ?? 'desconhecido');
+    const pick = stale ? items.slice(0, 4) : recent.slice(0, audience === 'redacao' ? 10 : 8);
+    const news = pick.map(({ at, ...x }, ref) => ({ ...x, ref, haHoras: Math.round((Date.now() - at) / 36e5) }));
+    const alerts = db.alerts.filter((a) => a.bairroId === bairro.id).slice(0, audience === 'redacao' ? 8 : 4).map((a) => ({ titulo: a.title, detalhe: a.detail, tipo: a.type, gravidade: a.severity, fonte: a.source }));
+    const extra = audience === 'redacao' ? {
+      relatos: db.relatos.filter((x) => x.bairroId === bairro.id && x.status !== 'falso' && Date.now() - x.createdAt < 48 * 3600e3).slice(0, 12)
+        .map((x) => ({ titulo: x.title, categoria: x.category, confirmacoes: x.confirmations.length, status: x.status === 'confirmado' ? 'confirmado pela redação' : x.status === 'apuracao' ? 'em apuração' : 'não verificado', haHoras: Math.round((Date.now() - x.createdAt) / 36e5) })),
+      diasSemTv: (() => { const last = db.segments.filter((s) => s.bairroIds.includes(bairro.id)).reduce((m, s) => Math.max(m, s.airedAt), 0); return last ? Math.floor((Date.now() - last) / 864e5) : null; })(),
+    } : {};
+    return summarizeDay(bairro.id, { bairro: bairro.name, news, alerts, stale, audience, ...extra }, r.ip ?? 'desconhecido');
   }
+
 
   /** Recalcula localização e utilidade de todas as notícias e retreina os modelos. */
   @Post('ml/recompute') async recompute(@Req() r: Request) {

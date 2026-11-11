@@ -1,5 +1,5 @@
 // Cliente da API NestJS. Mantém o último snapshot em memória e recarrega quando o servidor avisa (SSE).
-import type { Bairro, ContentKey, Db, Program, RelatoDraft, RelatoSummary, Role, Topic, CaseItemKind, CaseStage } from '@/domain/types';
+import type { Bairro, ContentKey, Db, Program, RelatoDraft, RelatoSummary, Role, Topic, CaseItemKind, CaseStage, DaySummaryData } from '@/domain/types';
 
 export class DomainError extends Error {}
 
@@ -114,7 +114,7 @@ export class HttpApi {
   markRead = (_a: string, id?: string) => this.mutate<void>('POST', '/notifications/read', { id });
   startLive = () => this.mutate<{ segmentId: string }>('POST', '/live/start');
   resetDemo = () => this.mutate<void>('POST', '/demo/reset');
-  daySummary = (bairroId: string) => this.request<{ bullets: string[]; engine: 'ia' | 'automatico'; model?: string; note?: string }>('POST', '/resumos/dia', { bairroId });
+  daySummary = (bairroId: string) => this.request<DaySummaryData>('POST', '/resumos/dia', { bairroId });
   summarize = (input: { groupId?: string; bairroIds?: string[] }) => this.request<RelatoSummary>('POST', '/resumos', input);
   confirmCase = (caseId: string, label?: string) => this.mutate<{ key: string }>('POST', '/casos/confirmar', { caseId, label });
   setCaseLink = (kind: CaseItemKind, id: string, caseId: string | null) => this.mutate<void>('POST', '/casos/ligar', { kind, id, caseId });

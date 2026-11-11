@@ -15,13 +15,13 @@ export function ModeToggle() {
   return (
     <label className="mode-toggle">
       <input type="checkbox" role="switch" checked={prefs.simple} onChange={(e) => { stopSpeaking(); setPrefs({ simple: e.target.checked }); }} />
-      <span className="switch" aria-hidden /><span>Modo Simples</span>
+      <span className="switch" aria-hidden /><span>Modo <span className="hide-sm">Simples</span><span className="show-sm">simples</span></span>
     </label>
   );
 }
 
-const NEXT_THEME: Record<Theme, Theme> = { dark: 'light', light: 'contrast', contrast: 'dark' };
-const THEME_LABEL: Record<Theme, string> = { dark: 'escuro', light: 'claro', contrast: 'alto contraste' };
+export const NEXT_THEME: Record<Theme, Theme> = { dark: 'light', light: 'contrast', contrast: 'dark' };
+export const THEME_LABEL: Record<Theme, string> = { dark: 'escuro', light: 'claro', contrast: 'alto contraste' };
 
 export function PageHeader({ title, back, right }: { title: string; back?: boolean; right?: ReactNode }) {
   const router = useRouter();
@@ -32,10 +32,10 @@ export function PageHeader({ title, back, right }: { title: string; back?: boole
       {back && <button type="button" className="icon-btn" aria-label="Voltar" onClick={() => router.back()}><ArrowLeft size={20} aria-hidden /></button>}
       <h1>{title}</h1>
       <div className="page-tools">
-        {right}
+        {right && <div className="page-extra">{right}</div>}
         <ModeToggle />
-        <button type="button" className="icon-btn txt" aria-label="Aumentar o tamanho da letra" onClick={() => setFont(0.1)}>A+</button>
-        <button type="button" className="icon-btn" aria-label={`Tema ${THEME_LABEL[prefs.theme]}. Trocar tema`} onClick={() => setPrefs({ theme: NEXT_THEME[prefs.theme] })}><ThemeIcon size={19} aria-hidden /></button>
+        <button type="button" className="icon-btn txt hide-sm" aria-label="Aumentar o tamanho da letra" onClick={() => setFont(0.1)}>A+</button>
+        <button type="button" className="icon-btn hide-sm" aria-label={`Tema ${THEME_LABEL[prefs.theme]}. Trocar tema`} onClick={() => setPrefs({ theme: NEXT_THEME[prefs.theme] })}><ThemeIcon size={19} aria-hidden /></button>
       </div>
     </header>
   );
@@ -188,7 +188,7 @@ export function DemoGuide() {
   ];
   return (
     <>
-      <button type="button" className="guide-fab" onClick={() => setGuideOpen(true)}><ListChecks size={18} aria-hidden />Roteiro da banca</button>
+      <button type="button" className="guide-fab" onClick={() => setGuideOpen(true)}><ListChecks size={18} aria-hidden />Roteiro<span className="hide-sm"> da banca</span></button>
       <Modal open={guideOpen} onClose={() => setGuideOpen(false)} title="Roteiro da banca">
         <ol className="guide">
           {steps.map((s, i) => <li key={s.title} className={s.done ? 'done' : ''}><span className="guide-n" aria-hidden>{s.done ? <Check size={16} /> : i + 1}</span><div><strong>{s.title}</strong>{s.done && <span className="sr-only"> (concluído)</span>}<p>{s.text}</p>{s.action}</div></li>)}

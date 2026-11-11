@@ -261,6 +261,28 @@ export interface RelatoSummary {
   generatedAt: number;
   cached?: boolean;
   note?: string;
+  /** morador: só o essencial; redacao (jornalista e admin): tudo, para decidir se há pauta. */
+  audience?: SummaryAudience;
+  /** Só para a redação: cada relato com a utilidade estimada para a apuração. */
+  items?: { relatoId: string; text: string; util: 'alta' | 'media' | 'baixa'; why: string }[];
+  /** Só para a redação: o que checar antes de publicar. */
+  checks?: string[];
+}
+export type SummaryAudience = 'morador' | 'redacao';
+
+/** Resumo do dia de um bairro. Para o morador é uma chamada curta que leva ao trecho do telejornal. */
+export interface DaySummaryData {
+  bullets: string[];
+  engine: 'ia' | 'automatico';
+  model?: string;
+  generatedAt: number;
+  note?: string;
+  cached?: boolean;
+  audience: SummaryAudience;
+  /** Morador: o trecho ou matéria que a chamada convida a ver. */
+  watch?: { kind: 'segment' | 'article'; id: string; label: string };
+  /** Redação: possíveis pautas e lacunas de cobertura. */
+  leads?: string[];
 }
 
 /** Triagem de apoio à redação. Só jornalista, moderador e admin recebem. Não decide nada. */

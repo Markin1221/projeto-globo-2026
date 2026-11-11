@@ -1,4 +1,4 @@
-# Bairro em Pauta
+# Amigo da Vizinhança
 
 Radar de notícias locais para o Desafio Globo no Rec'n'Play 2026. O app avisa o morador quando o bairro dele vira pauta nos telejornais e portais, organiza o acervo por bairro e acompanha cada problema até a solução. Os relatos de moradores ficam separados, com um aviso permanente de que não foram verificados. O conteúdo que vem no banco é de exemplo; com o scraper, entram notícias reais do g1 PE.
 
@@ -61,7 +61,7 @@ docker compose exec db psql -U bairro bairro               # abrir o banco
 
 1. No Windows, libere a porta 80 no firewall (PowerShell como administrador):
    ```powershell
-   New-NetFirewallRule -DisplayName "Bairro em Pauta 80" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow -Profile Any
+   New-NetFirewallRule -DisplayName "Amigo da Vizinhanca 80" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow -Profile Any
    ```
 2. Rode `ipconfig` e anote o "Endereço IPv4" do Wi-Fi (ignore os de VPN e WSL).
 3. No celular, no mesmo Wi-Fi, abra `http://ESSE-IP`, com `http://` na frente.

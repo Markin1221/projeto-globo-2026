@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Bell, Bookmark, Compass, Gavel, Home, LayoutDashboard, Map, Menu, Megaphone, Newspaper, Settings, Siren, Tv, User as UserIcon, Users, Route, Radar } from 'lucide-react';
 import type { Role } from '@/domain/types';
-import { boot, useDb, useMe, useUi } from '@/store';
-import { DemoGuide, LiveBanner, ProfileSwitcher, RightRail, SpeechBar, Toasts, UserLine } from './shell-parts';
+import { boot, setFont, setPrefs, useDb, useMe, useUi } from '@/store';
+import { DemoGuide, LiveBanner, NEXT_THEME, ProfileSwitcher, RightRail, SpeechBar, THEME_LABEL, Toasts, UserLine } from './shell-parts';
 import { SimpleMode } from './simple-mode';
 import { ErrorState, Modal, Skeleton } from './ui';
 
@@ -62,6 +62,7 @@ export const Logo = () => <span className="logo" aria-hidden><Radar size={26} st
 
 function FullShell({ children }: { children: ReactNode }) {
   const me = useMe();
+  const { prefs } = useUi();
   const path = usePathname();
   const main = useRef<HTMLElement>(null);
   const [more, setMore] = useState(false);
@@ -77,7 +78,7 @@ function FullShell({ children }: { children: ReactNode }) {
     <div className="shell">
       <a className="skip" href="#conteudo">Pular para o conteúdo</a>
       <nav className="side" aria-label="Principal">
-        <Link href="/" className="brand" aria-label="Bairro em Pauta — início"><Logo /><span className="brand-copy">Bairro em Pauta<small>Informação perto de você</small></span></Link>
+        <Link href="/" className="brand" aria-label="Amigo da Vizinhança, início"><Logo /><span className="brand-copy">Amigo da Vizinhança<small>Informação perto de você</small></span></Link>
         <div className="side-links">
           <div className="nav-group"><p className="nav-section-label">Descobrir</p><NavLinks items={items.filter((n) => NAV.indexOf(n) < 6)} /></div>
           <div className="nav-group"><p className="nav-section-label">Seu espaço</p><NavLinks items={items.filter((n) => NAV.indexOf(n) >= 6 && !n.roles)} /></div>
@@ -93,6 +94,11 @@ function FullShell({ children }: { children: ReactNode }) {
         <button type="button" className="nav-link" onClick={() => setMore(true)}><span className="nav-icon"><Menu size={23} aria-hidden /></span><span className="nav-label">Mais</span></button>
       </nav>
       <Modal open={more} onClose={() => setMore(false)} title="Menu">
+        <div className="more-view" role="group" aria-label="Aparência">
+          <button type="button" className="btn btn-outline" onClick={() => setFont(-0.1)} aria-label="Diminuir a letra">A−</button>
+          <button type="button" className="btn btn-outline" onClick={() => setFont(0.1)} aria-label="Aumentar a letra">A+</button>
+          <button type="button" className="btn btn-outline" onClick={() => setPrefs({ theme: NEXT_THEME[prefs.theme] })}>Tema: {THEME_LABEL[prefs.theme]}</button>
+        </div>
         <div className="more-links"><NavLinks items={items} onNavigate={() => setMore(false)} /></div>
         <ProfileSwitcher />
       </Modal>

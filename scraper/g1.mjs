@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Scraper do g1 Pernambuco para o Bairro em Pauta. Sem dependências (Node 20+).
+// Scraper do g1 Pernambuco para o Amigo da Vizinhança. Sem dependências (Node 20+).
 //
 // Como funciona:
 //   1. Descobre links de notícias no RSS do g1 PE e nas páginas da listagem (pagina-1, pagina-2...).
@@ -46,7 +46,7 @@ const ALL = flag('tudo');
 const KEEP_BODY = flag('guardar-corpo');
 const DRY = flag('simular');
 const REPROCESS = flag('reprocessar');
-const UA = process.env.SCRAPER_USER_AGENT ?? 'BairroEmPautaBot/0.1 (projeto Rec\'n\'Play 2026)';
+const UA = process.env.SCRAPER_USER_AGENT ?? 'AmigoDaVizinhancaBot/0.1 (projeto Rec\'n\'Play 2026)';
 
 if (!KEY && !DRY) { console.error('Defina INGEST_API_KEY (a mesma do .env do servidor) ou use --simular.'); process.exit(1); }
 

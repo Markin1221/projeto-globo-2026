@@ -28,7 +28,7 @@ function BairroFilter({ value, onChange }: { value: string; onChange: (v: string
       <label className="s-other">
         <span>Outro bairro</span>
         <select value={other ? value : ''} onChange={(e) => e.target.value && onChange(e.target.value)}>
-          <option value="">Escolha</option>
+          <option value="">Escolher outro bairro</option>
           {db.cities.map((city) => (
             <optgroup key={city.id} label={city.name}>
               {db.bairros.filter((b) => b.active && b.cityId === city.id).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -268,9 +268,9 @@ export function SimpleMode() {
   return (
     <div className="simple">
       <header className="s-top">
-        <span className="brand-sm">Bairro em Pauta</span>
-        <div className="row">
-          <Button big aria-label="Aumentar a letra" onClick={() => setFont(0.1)}>A+</Button>
+        <span className="brand-sm">Amigo da Vizinhança</span>
+        <div className="s-top-acts">
+          <Button big aria-label="Aumentar a letra" onClick={() => setFont(0.1)}>A+<span className="s-top-hint">Letra maior</span></Button>
           <Button big onClick={() => { stopSpeaking(); setPrefs({ simple: false }); }}>Modo completo</Button>
         </div>
       </header>

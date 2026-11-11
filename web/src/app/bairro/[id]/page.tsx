@@ -72,7 +72,7 @@ export default function BairroPage() {
             <div><h2>{b.name}</h2><p className="muted">{b.region}, {followers} {followers === 1 ? 'pessoa segue' : 'pessoas seguem'}, {newsVolume(db, id)} vezes na pauta</p></div>
             <FollowButton bairroId={id} />
           </div>
-          <DaySummary bairroId={id} title="Resumo do dia" />
+          <DaySummary bairroId={id} />
         </section>
         <Tabs label="Seções do bairro" value={tab} onChange={setTab} tabs={[{ id: 'feed', label: 'Feed' }, { id: 'acervo', label: 'Acervo' }, { id: 'linha', label: 'Acompanhamento', count: db.cases.filter((c) => c.bairroIds.includes(id)).length }, { id: 'relatos', label: 'Relatos', count: relatos.length }, { id: 'alertas', label: 'Alertas', count: alerts.length }]} />
         {tab === 'feed' && (feed.length ? <div className="feed">{feed.map((e) => <EntryCard key={e.item.id} entry={e} />)}</div> : <EmptyState title={`${b.name} ainda não foi pauta`} text="Este é um dos bairros invisíveis da cobertura. Conte o que acontece por aqui." action={<Link className="btn btn-primary" href="/relatar">Relatar</Link>} />)}
