@@ -464,3 +464,33 @@ export async function setCaseStage(v: User | null, b: { kind: CaseKind; id: stri
   emit();
   return { ok: true };
 }
+
+// ---------- Agenda de reportagens ----------
+const OUTLETS = ['g1', 'ne1', 'ne2'] as const;
+export async function createAgenda(v: User | null, b: { title: string; note?: string; date: string; time?: string; outlet: string; bairroId?: string | null; cityId?: string }) {
+  const u = caseEditor(v);
+  const title = String(b?.title ?? '').trim();
+  if (title.length < 3 || title.length > 140) throw bad('Escreva um título de 3 a 140 caracteres.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b?.date ?? ''))) throw bad('Escolha a data.');
+  if (b.time && !/^\d{2}:\d{2}$/.test(b.time)) throw bad('Horário inválido.');
+  if (!OUTLETS.includes(b.outlet as (typeof OUTLETS)[number])) throw bad('Escolha g1, NE1 ou NE2.');
+  const note = String(b.note ?? '').trim().slice(0, 400) || null;
+  let city = String(b.cityId ?? 'recife');
+  if (b.bairroId) {
+    const [row] = await q<{ city_id: string }>('select city_id from bairros where id = $1', [b.bairroId]);
+    if (!row) throw bad('Bairro não encontrado.');
+    city = row.city_id;
+  }
+  await q('insert into agenda (title, note, starts_on, at_time, outlet, city_id, bairro_id, created_by) values ($1,$2,$3,$4,$5,$6,$7,$8)',
+    [title, note, b.date, b.time || null, b.outlet, city, b.bairroId || null, u.id]);
+  emit();
+  return { ok: true };
+}
+
+export async function deleteAgenda(v: User | null, id: string) {
+  caseEditor(v);
+  if (!UUID.test(id ?? '')) throw bad('Item inválido.');
+  await q('delete from agenda where id = $1', [id]);
+  emit();
+  return { ok: true };
+}

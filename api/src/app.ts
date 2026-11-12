@@ -115,9 +115,10 @@ class AppController {
   }
 
   /** Resumo do dia de um bairro: telejornais, portal e alertas (sem relatos não verificados). */
-  @Post('resumos/dia') @HttpCode(200) async resumoDia(@Req() r: Request, @Body() b: { bairroId: string }) {
+  @Post('resumos/dia') @HttpCode(200) async resumoDia(@Req() r: Request, @Body() b: { bairroId: string; curto?: boolean }) {
     const v = await viewer(r);
-    const audience = v && canEditCases(v) ? 'redacao' as const : 'morador' as const;
+    // curto: a versão do morador (o início pede essa para todo mundo). Pedir menos nunca expõe nada.
+    const audience = v && canEditCases(v) && !b?.curto ? 'redacao' as const : 'morador' as const;
     const db = await snapshot(audience === 'redacao' ? v : null, null);
     const bairro = db.bairros.find((x) => x.id === b?.bairroId);
     if (!bairro) throw S.bad('Bairro não encontrado.');
@@ -150,6 +151,8 @@ class AppController {
     return out;
   }
 
+  @Post('agenda') @HttpCode(200) async agendaAdd(@Req() r: Request, @Body() b: Parameters<typeof S.createAgenda>[1]) { return S.createAgenda(await viewer(r), b ?? ({} as never)); }
+  @Delete('agenda/:id') async agendaDel(@Req() r: Request, @Param('id') id: string) { return S.deleteAgenda(await viewer(r), id); }
   @Post('casos/confirmar') @HttpCode(200) async caseConfirm(@Req() r: Request, @Body() b: { caseId: string; label?: string }) { return S.confirmCase(await viewer(r), b?.caseId, b?.label); }
   @Post('casos/ligar') @HttpCode(200) async caseLink(@Req() r: Request, @Body() b: Parameters<typeof S.setCaseLink>[1]) { return S.setCaseLink(await viewer(r), b ?? ({} as never)); }
   @Post('casos/etapa') @HttpCode(200) async caseStage(@Req() r: Request, @Body() b: Parameters<typeof S.setCaseStage>[1]) { return S.setCaseStage(await viewer(r), b ?? ({} as never)); }

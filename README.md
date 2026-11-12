@@ -70,7 +70,7 @@ Redes de faculdade, hotel e eventos costumam isolar os aparelhos entre si. Nesse
 
 ## Apresentação
 
-O botão **Roteiro da banca**, no canto inferior direito, guia os 7 passos e marca o que já foi feito:
+Sugestão de roteiro para a banca (7 passos):
 
 1. Seguir Casa Amarela e ver o resumo do dia.
 2. Simular um telejornal ao vivo: a transcrição detecta o bairro e dispara a tarja.
@@ -80,7 +80,7 @@ O botão **Roteiro da banca**, no canto inferior direito, guia os 7 passos e mar
 6. Acompanhar o buraco da Rua Alto do Céu: foi tapado e voltou a abrir.
 7. Modo Simples em voz alta.
 
-Se sobrar tempo, há atalhos para o mapa, o Painel do Jornalista e o Admin. **Restaurar dados da demo** volta tudo ao início (apaga o que foi feito na demonstração, para todos).
+Se sobrar tempo, mostre o mapa, o Painel do Jornalista e o Admin. Para voltar tudo ao início (apaga o que foi feito na demonstração, para todos): `docker compose exec api node dist/api/src/main.js --reset`.
 
 ## Rodar na sua máquina, sem Docker para o app
 

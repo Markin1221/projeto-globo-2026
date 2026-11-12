@@ -167,7 +167,7 @@ export function RightRail() {
       <section className="rail-box" aria-labelledby="rt"><h2 id="rt">Em alta nos bairros</h2>
         <ol className="trend">{trendingBairros(db).slice(0, 4).map((t) => <li key={t.bairro.id}><Link href={`/bairro/${t.bairro.id}`}><strong>{t.bairro.name}</strong><small>{t.news} notícias, {t.reports} relatos</small></Link></li>)}</ol>
         <p className="topics">{trendingTopics(db).slice(0, 4).map((t) => <Link key={t.topic} href={`/busca?q=${encodeURIComponent(t.label)}`} className="chip">{t.label}</Link>)}</p>
-        <Link className="more-link" href="/casos">Acompanhar os casos dos bairros</Link>
+        <Link className="more-link" href="/casos">Casos e agenda de reportagens</Link>
       </section>
     </aside>
   );

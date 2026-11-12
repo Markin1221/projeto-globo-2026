@@ -263,10 +263,10 @@ const DAY_BASE = `- Use só o que está nos dados. Não invente horários, núme
 const DAY_MORADOR = `Você escreve a chamada do dia de um bairro do Recife para moradores, como a chamada de um telejornal antes do intervalo.
 O objetivo é a pessoa querer assistir ao trecho: diga o assunto e por que importa para o bairro, sem contar o desfecho nem os detalhes.
 Regras obrigatórias:
-- "chamada": 1 frase de no máximo 20 palavras sobre a notícia mais importante. Não seja sensacionalista nem engane: só desperte a curiosidade com o que é verdade.
+- "chamada": 1 frase curta, de no máximo 16 palavras, em linguagem do dia a dia (sem termos técnicos, siglas ou números de horas), sobre a notícia mais importante. Não seja sensacionalista nem engane: só desperte a curiosidade com o que é verdade.
 - "assistir": o "ref" da notícia da chamada (prefira telejornal).
-- "alerta": se houver alerta de gravidade "urgente" ou "atencao", 1 frase de no máximo 22 palavras com o que fazer. Alerta de segurança é dito por inteiro, nunca como mistério. Sem alerta, vazio.
-- Se "sem_noticias_recentes" for verdadeiro, a chamada diz que o bairro não apareceu na TV nas últimas 48 horas e convida a ver a última notícia.
+- "alerta": se houver alerta de gravidade "urgente" ou "atencao" sobre outro assunto que não o da chamada, 1 frase de no máximo 18 palavras com o que fazer. Alerta de segurança é dito por inteiro, nunca como mistério. Sem alerta, ou se for o mesmo assunto da chamada, vazio.
+- Se "sem_noticias_recentes" for verdadeiro, a chamada fala da última notícia do bairro, sem dizer há quanto tempo.
 ${DAY_BASE}
 Responda SOMENTE com JSON válido, sem texto antes ou depois: {"chamada": "...", "assistir": 0, "alerta": "..."}`;
 
@@ -289,8 +289,8 @@ function dayFallback(inp: DayInput): Pick<DaySummary, 'bullets' | 'watch' | 'lea
   if (inp.audience === 'morador') {
     return {
       bullets: [
-        main ? (inp.stale ? `${inp.bairro} não apareceu na TV nas últimas 48 horas. A última notícia: ${clean(main.titulo)}.` : `${main.tipo === 'telejornal' ? `No ${main.fonte}` : 'No portal'}: ${clean(main.titulo)}.`) : `${inp.bairro} não apareceu no noticiário recentemente.`,
-        ...(al ? [`Alerta: ${clean(al.titulo)}. ${al.detalhe}`] : []),
+        main ? `${main.tipo === 'telejornal' ? `No ${main.fonte}` : 'No portal'}: ${clean(main.titulo)}.` : `${inp.bairro} não apareceu no noticiário recentemente.`,
+        ...(al && (!main || clean(al.titulo).toLowerCase() !== clean(main.titulo).toLowerCase()) ? [`Alerta: ${clean(al.titulo)}.`] : []),
       ],
       watch,
     };
@@ -313,7 +313,7 @@ export async function summarizeDay(bairroId: string, inp: DayInput, ip: string):
   const p = provider();
   const day = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Recife' });
   const fingerprint = JSON.stringify([inp.news.map((n) => n.titulo), inp.alerts.map((a) => a.titulo), (inp.relatos ?? []).map((r) => `${r.titulo}:${r.confirmacoes}:${r.status}`)]);
-  const key = createHash('sha256').update(`dia2|${inp.audience}|${p ? `ia:${p.id}:${p.model}` : 'automatico'}|${bairroId}|${day}|${fingerprint}`).digest('hex');
+  const key = createHash('sha256').update(`dia3|${inp.audience}|${p ? `ia:${p.id}:${p.model}` : 'automatico'}|${bairroId}|${day}|${fingerprint}`).digest('hex');
   const [hit] = await q<{ payload: DaySummary }>('select payload from ai_summaries where key = $1', [key]);
   if (hit && !(p && (hit.payload.engine !== 'ia' || hit.payload.note))) return { ...hit.payload, cached: true };
   if (hit) await q('delete from ai_summaries where key = $1', [key]);
@@ -342,7 +342,10 @@ export async function summarizeDay(bairroId: string, inp: DayInput, ip: string):
     } else {
       const chamada = str(json.chamada, 200);
       if (!chamada) throw new Error('resposta sem chamada');
-      const alerta = str(json.alerta, 220);
+      let alerta = str(json.alerta, 220);
+      // A IA às vezes repete a chamada no alerta: descarta se for praticamente a mesma frase.
+      const nrm = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+      if (alerta && (nrm(alerta).includes(nrm(chamada).slice(0, 50)) || nrm(chamada).includes(nrm(alerta).slice(0, 50)))) alerta = '';
       const ref = inp.news.find((n) => n.ref === Number(json.assistir)) ?? inp.news.find((n) => n.tipo === 'telejornal') ?? inp.news[0];
       out = {
         bullets: [chamada, ...(alerta ? [alerta] : [])],

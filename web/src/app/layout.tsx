@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import '@fontsource-variable/atkinson-hyperlegible-next/index.css';
 import '@fontsource/barlow-condensed/600.css';
 import '@fontsource/barlow-condensed/700.css';
+import '@fontsource/nunito/700.css';
+import '@fontsource/nunito/800.css';
 import 'leaflet/dist/leaflet.css';
 import './globals.css';
 import './design.css';

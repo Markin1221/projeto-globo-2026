@@ -2,13 +2,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, Gavel, Home, LayoutDashboard, Map, Menu, Megaphone, Newspaper, Route, Search, Settings, Siren, Tv, Users } from 'lucide-react';
+import { Bell, Gavel, Home, X, LayoutDashboard, Map, Menu, Megaphone, Newspaper, Route, Settings, Siren, Tv, Users } from 'lucide-react';
 import type { Role } from '@/domain/types';
 import { boot, setFont, setPrefs, useDb, useMe, useUi } from '@/store';
-import { DemoGuide, LiveBanner, ModeToggle, NEXT_THEME, ProfileSwitcher, RightRail, SpeechBar, THEME_LABEL, Toasts, UserLine } from './shell-parts';
-import { SiteHeader } from './site-header';
+import { LiveBanner, ModeToggle, NEXT_THEME, ProfileSwitcher, RightRail, SpeechBar, THEME_LABEL, Toasts, UserLine } from './shell-parts';
+import { NETWORK, SiteHeader } from './site-header';
 import { SimpleMode } from './simple-mode';
-import { ErrorState, Modal, Skeleton } from './ui';
+import { ErrorState, Skeleton } from './ui';
 
 // group: onde o item aparece no menu lateral. 'mais': só no menu "Mais" do celular (fica fora do caminho, mas acessível).
 interface NavItem { href: string; label: string; icon: typeof Home; roles?: Role[]; badge?: 'notif' | 'alerts'; group: 'descobrir' | 'espaco' | 'redacao' | 'mais' }
@@ -21,8 +21,7 @@ const NAV: NavItem[] = [
   { href: '/notificacoes', label: 'Notificações', icon: Bell, badge: 'notif', group: 'espaco' },
   { href: '/relatar', label: 'Relatar', icon: Megaphone, group: 'espaco' },
   { href: '/configuracoes', label: 'Configurações', icon: Settings, group: 'espaco' },
-  { href: '/casos', label: 'Acompanhamento de casos', icon: Route, group: 'mais' },
-  { href: '/busca', label: 'Buscar', icon: Search, group: 'mais' },
+  { href: '/casos', label: 'Casos e agenda', icon: Route, group: 'mais' },
   { href: '/jornalista', label: 'Painel do Jornalista', icon: Newspaper, roles: ['jornalista'], group: 'redacao' },
   { href: '/moderacao', label: 'Moderação', icon: Gavel, roles: ['moderador'], group: 'redacao' },
   { href: '/admin', label: 'Admin', icon: LayoutDashboard, roles: ['admin'], group: 'redacao' },
@@ -60,6 +59,65 @@ function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => 
 
 export { Logo } from './brand';
 
+/** Menu em gaveta pela esquerda, no padrão da globo.com: conta, seções do app, sites da Globo e acessibilidade. */
+function MenuDrawer({ open, onClose, items }: { open: boolean; onClose: () => void; items: NavItem[] }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const { prefs } = useUi();
+  const me = useMe();
+  const [closing, setClosing] = useState(false);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    if (open && !el.open) { setClosing(false); el.showModal(); }
+    if (!open && el.open) el.close();
+  }, [open]);
+  // Fecha com animação (desliza de volta) antes de sumir.
+  const close = () => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { onClose(); return; }
+    setClosing(true); setTimeout(() => { setClosing(false); onClose(); }, 200);
+  };
+  const app = items.filter((n) => n.group !== 'redacao');
+  const staff = items.filter((n) => n.group === 'redacao');
+  return (
+    <dialog ref={ref} className={`drawer ${closing ? 'closing' : ''}`} aria-label="Menu" onCancel={(e) => { e.preventDefault(); close(); }} onClick={(e) => { if (e.target === ref.current) close(); }}>
+      {open && (
+        <div className="drawer-body">
+          <div className="drawer-top">
+            <Link href="/perfil" className="drawer-account" onClick={close}>
+              <UserLine />
+              <small>{me.role === 'visitante' ? 'Acesse sua conta ou escolha um perfil abaixo' : 'Ver meu perfil'}</small>
+            </Link>
+            <button type="button" className="icon-btn" aria-label="Fechar o menu" onClick={close}><X size={22} aria-hidden /></button>
+          </div>
+          <nav className="drawer-section" aria-label="GloboVila">
+            <p className="drawer-label">GloboVila</p>
+            <div className="drawer-links"><NavLinks items={app} onNavigate={close} /></div>
+          </nav>
+          {staff.length > 0 && (
+            <nav className="drawer-section" aria-label="Redação">
+              <p className="drawer-label">Redação</p>
+              <div className="drawer-links"><NavLinks items={staff} onNavigate={close} /></div>
+            </nav>
+          )}
+          <nav className="drawer-section" aria-label="Sites da Globo">
+            <p className="drawer-label">Sites da Globo</p>
+            <ul className="drawer-sites">{NETWORK.map((n) => <li key={n.href}><a href={n.href} className={n.cls}><span className="site-dot" aria-hidden />{n.label}</a></li>)}</ul>
+          </nav>
+          <section className="drawer-section" aria-label="Acessibilidade">
+            <p className="drawer-label">Acessibilidade</p>
+            <ModeToggle />
+            <div className="more-view" role="group" aria-label="Aparência">
+              <button type="button" className="btn btn-outline" onClick={() => setFont(-0.1)} aria-label="Diminuir a letra">A−</button>
+              <button type="button" className="btn btn-outline" onClick={() => setFont(0.1)} aria-label="Aumentar a letra">A+</button>
+              <button type="button" className="btn btn-outline" onClick={() => setPrefs({ theme: NEXT_THEME[prefs.theme] })}>Tema: {THEME_LABEL[prefs.theme]}</button>
+            </div>
+          </section>
+          <section className="drawer-section"><ProfileSwitcher /></section>
+        </div>
+      )}
+    </dialog>
+  );
+}
+
 function FullShell({ children }: { children: ReactNode }) {
   const me = useMe();
   const { prefs } = useUi();
@@ -86,18 +144,7 @@ function FullShell({ children }: { children: ReactNode }) {
         <NavLinks items={BOTTOM.map((h) => NAV.find((n) => n.href === h)!)} />
         <button type="button" className="nav-link" onClick={() => setMore(true)}><span className="nav-icon"><Menu size={23} aria-hidden /></span><span className="nav-label">Mais</span></button>
       </nav>
-      <Modal open={more} onClose={() => setMore(false)} title="Menu">
-        <Link href="/perfil" className="me-link me-link-more" onClick={() => setMore(false)}><UserLine /><small>Ver perfil</small></Link>
-        <div className="menu-accessibility"><ModeToggle /></div>
-        <div className="more-view" role="group" aria-label="Aparência">
-          <button type="button" className="btn btn-outline" onClick={() => setFont(-0.1)} aria-label="Diminuir a letra">A−</button>
-          <button type="button" className="btn btn-outline" onClick={() => setFont(0.1)} aria-label="Aumentar a letra">A+</button>
-          <button type="button" className="btn btn-outline" onClick={() => setPrefs({ theme: NEXT_THEME[prefs.theme] })}>Tema: {THEME_LABEL[prefs.theme]}</button>
-        </div>
-        <div className="more-links"><NavLinks items={items} onNavigate={() => setMore(false)} /></div>
-        <ProfileSwitcher />
-      </Modal>
-      <DemoGuide />
+      <MenuDrawer open={more} onClose={() => setMore(false)} items={items} />
     </div>
     </>
   );

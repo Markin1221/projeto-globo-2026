@@ -4,6 +4,7 @@ import { ArrowUp } from 'lucide-react';
 import { BairroPicker } from '@/components/dialogs';
 import { DaySummary } from '@/components/day-summary';
 import { EntryCard, ResidentsBlock } from '@/components/cards';
+import { HeroCarousel } from '@/components/hero-carousel';
 import { PageHeader } from '@/components/shell-parts';
 import { Button, EmptyState, PageState, Tabs } from '@/components/ui';
 import { canFollow } from '@/domain/rules';
@@ -16,7 +17,7 @@ function DailySummary({ ids }: { ids: string[] }) {
   const [current, setCurrent] = useState(latest);
   const id = ids.includes(current) ? current : latest;
   const picker = ids.length > 1 ? <><label className="sr-only" htmlFor="sum-b">Bairro do resumo</label><select id="sum-b" className="mini" value={id} onChange={(e) => setCurrent(e.target.value)}>{[...ids].reverse().map((b) => <option key={b} value={b}>{bairroName(db, b)}</option>)}</select></> : undefined;
-  return <DaySummary bairroId={id} picker={picker} />;
+  return <DaySummary bairroId={id} picker={picker} short />;
 }
 
 export default function HomePage() {
@@ -34,9 +35,12 @@ export default function HomePage() {
   return (
     <>
       <PageHeader title="Início" />
+      <HeroCarousel />
       <Tabs label="Escopo do feed" value={scope} onChange={setScope} tabs={[{ id: 'meus', label: 'Meus bairros' }, { id: 'todos', label: 'Grande Recife' }]} />
       <PageState state={state} retry={retry}>
-        {ids.length > 0 && <div className="home-top"><DailySummary ids={ids} /></div>}
+        <div className="home-top">
+          {ids.length > 0 && <DailySummary ids={ids} />}
+        </div>
         <label className="check useful-toggle"><input type="checkbox" checked={useful} onChange={(e) => setUseful(e.target.checked)} />Só o que muda o dia a dia (trânsito, água, saúde, obras, prazos)</label>
         {fresh > 0 && <button type="button" className="fresh-pill" onClick={() => { setCutoff(Date.now()); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><ArrowUp size={16} aria-hidden />{fresh === 1 ? '1 nova publicação' : `${fresh} novas publicações`}</button>}
         {shown.length === 0 && scope === 'meus'

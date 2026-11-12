@@ -12,7 +12,12 @@ export default function SearchPage() {
   const db = useDb();
   const [q, setQ] = useState('');
   const [tab, setTab] = useState<'noticias' | 'bairros' | 'relatos'>('noticias');
-  useEffect(() => { setQ(new URLSearchParams(window.location.search).get('q') ?? ''); }, []);
+  useEffect(() => {
+    setQ(new URLSearchParams(window.location.search).get('q') ?? '');
+    const on = (e: Event) => setQ((e as CustomEvent<string>).detail);
+    window.addEventListener('gv-search', on);
+    return () => window.removeEventListener('gv-search', on);
+  }, []);
   const r = search(db, q);
   const places = searchPlaces(q, db.bairros, db.streets);
   const none = q.length >= 2 && !r.entries.length && !r.bairros.length && !r.relatos.length;

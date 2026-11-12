@@ -7,6 +7,8 @@ import { seedDatabase } from './seed/load';
 import { recomputeAll } from './ingest';
 import { mlStats, trainAll } from './ml/models';
 import { applyLimits } from './limits';
+import { seedAgenda } from './seed/agenda';
+import { DEMO_MODE } from './repo';
 
 async function bootstrap() {
   await waitForDb();
@@ -22,6 +24,8 @@ async function bootstrap() {
     console.log('Banco vazio: dados de exemplo carregados.');
   }
 
+  // Banco criado antes da agenda existir: carrega a agenda de exemplo uma vez (só na demonstração).
+  if (DEMO_MODE) { const [{ n }] = await q<{ n: number }>('select count(*)::int as n from agenda'); if (!n) await seedAgenda(); }
   const limits = await applyLimits();
   if (limits) console.log(`Limites oficiais aplicados em ${limits} bairros.`);
 

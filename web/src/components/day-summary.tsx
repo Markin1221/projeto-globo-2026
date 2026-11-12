@@ -11,10 +11,23 @@ import type { DaySummaryData } from '@/domain/types';
 import { api, useDb, useMe } from '@/store';
 import { ListenButton } from './cards';
 
-export function DaySummary({ bairroId, title, picker }: { bairroId: string; title?: string; picker?: React.ReactNode }) {
+/** Remove frases repetidas ou quase iguais (a IA às vezes repete a chamada no alerta). */
+export function uniqueLines(lines: string[]) {
+  const norm = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+  const out: string[] = []; const seen: string[] = [];
+  for (const l of lines) {
+    const n = norm(l);
+    if (!n || seen.some((x) => x === n || x.includes(n.slice(0, 50)) || n.includes(x.slice(0, 50)))) continue;
+    seen.push(n); out.push(l);
+  }
+  return out;
+}
+
+/** short: versão do início, sempre curta e simples (a mesma do morador), também para a redação. */
+export function DaySummary({ bairroId, title, picker, short }: { bairroId: string; title?: string; picker?: React.ReactNode; short?: boolean }) {
   const db = useDb();
   const me = useMe();
-  const staff = canEditCases(me);
+  const staff = canEditCases(me) && !short;
   const name = bairroName(db, bairroId);
   const local = dailySummary(db, bairroId);
   // Refaz quando entram notícias ou alertas novos no bairro (ex.: telejornal ao vivo) ou quando muda o perfil.
@@ -25,12 +38,12 @@ export function DaySummary({ bairroId, title, picker }: { bairroId: string; titl
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    api.daySummary(bairroId).then((d) => { if (alive) setDay(d); }, () => { if (alive) setDay(null); }).finally(() => { if (alive) setLoading(false); });
+    api.daySummary(bairroId, !!short).then((d) => { if (alive) setDay(d); }, () => { if (alive) setDay(null); }).finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [version, bairroId]);
+  }, [version, bairroId, short]);
 
   // Enquanto a resposta não chega, o morador vê só a primeira linha do resumo local.
-  const bullets = day?.bullets ?? (staff ? local : local.slice(0, 1));
+  const bullets = uniqueLines(day?.bullets ?? (staff ? local : local.slice(0, 1))).slice(0, staff ? 10 : 2);
   const ai = day?.engine === 'ia';
   const watchHref = day?.watch ? (day.watch.kind === 'segment' ? `/trecho/${day.watch.id}` : `/materia/${day.watch.id}`) : null;
   const heading = title ?? (staff ? `Panorama do dia de ${name}` : `Hoje em ${name}`);
@@ -54,8 +67,8 @@ export function DaySummary({ bairroId, title, picker }: { bairroId: string; titl
       <div className="row between">
         <small className="ai-note">
           {loading ? <><Loader2 size={14} className="spin" aria-hidden />Gerando o resumo com IA...</>
-            : ai ? <><Sparkles size={14} aria-hidden />Resumo feito por IA a partir das notícias e alertas oficiais.{staff ? ' Relatos citados não foram verificados.' : ''} Pode conter erros.</>
-              : <>Resumo automático a partir das notícias e alertas oficiais.{day?.note ? ` ${day.note}` : ''}</>}
+            : ai ? <><Sparkles size={14} aria-hidden />{staff ? 'Feito por IA a partir das notícias e alertas oficiais. Relatos citados não foram verificados. Pode conter erros.' : 'Resumo feito por IA. Pode conter erros.'}</>
+              : <>{staff ? `Resumo automático a partir das notícias e alertas oficiais.${day?.note ? ` ${day.note}` : ''}` : 'Resumo automático das notícias oficiais.'}</>}
         </small>
         <ListenButton id={`summary:${bairroId}`} label="Ouvir resumo do bairro" text={`${heading}. ${bullets.join(' ')}${!staff && day?.watch ? ` ${day.watch.label} no aplicativo.` : ''}`} />
       </div>

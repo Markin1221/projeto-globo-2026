@@ -81,7 +81,7 @@ export async function snapshot(viewer: User | null, live: LiveState | null): Pro
   const mod = !!viewer && canModerate(viewer);
   const staff = !!viewer && canSeeContact(viewer);
 
-  const [cities, bairros, streets, usersRows, follows, sources, news, relRows, confRows, histRows, comRows, alertRows, hidden, locked, meta] = await Promise.all([
+  const [cities, bairros, streets, usersRows, follows, sources, news, relRows, confRows, histRows, comRows, alertRows, hidden, locked, meta, agendaRows] = await Promise.all([
     q('select * from cities where active order by (id <> \'recife\'), name'),
     loadBairros(),
     q('select name, bairro_id from streets order by name'),
@@ -97,6 +97,7 @@ export async function snapshot(viewer: User | null, live: LiveState | null): Pro
     q('select target_type, target_id from hidden_content'),
     q('select target_type, target_id from locked_threads'),
     seededAt(),
+    q("select id, title, note, to_char(starts_on, 'YYYY-MM-DD') as day, to_char(at_time, 'HH24:MI') as hour, outlet, city_id, bairro_id from agenda where starts_on >= current_date - 60 order by starts_on, at_time nulls last, created_at"),
   ]);
 
   const newsIds = news.map((n: Row) => n.id);
@@ -179,6 +180,7 @@ export async function snapshot(viewer: User | null, live: LiveState | null): Pro
     hiddenContent: mod ? hiddenKeys : [],
     live,
     relatoGroups: clusterRelatos(visibleRelatos.filter((r) => r.status !== 'falso'), bairros),
+    agenda: agendaRows.map((a: Row) => ({ id: a.id, title: a.title, note: a.note ?? undefined, date: a.day, time: a.hour ?? undefined, outlet: a.outlet, cityId: a.city_id, bairroId: a.bairro_id ?? null })),
     cases: buildCases(segments.filter((x) => !isHidden(`segment:${x.id}`)), articles.filter((x) => !isHidden(`article:${x.id}`)), visibleRelatos, bairros),
   };
 }

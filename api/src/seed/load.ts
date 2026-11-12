@@ -4,6 +4,7 @@ import type { PoolClient } from 'pg';
 import { TOPIC_LABEL } from '../../../shared/domain/rules';
 import type { ContentKey } from '../../../shared/domain/types';
 import { createSeed } from './index';
+import { seedAgenda } from './agenda';
 
 export function sid(key: string) {
   const h = createHash('md5').update(`bairro-em-pauta:${key}`).digest('hex');
@@ -89,4 +90,5 @@ export async function seedDatabase(c: PoolClient) {
   }
   for (const k of S.lockedThreads) { const t = key(k); await run('insert into locked_threads (target_type, target_id) values ($1,$2)', [t.type, t.id]); }
   await run("insert into app_meta (key, value) values ('seeded_at', $1) on conflict (key) do update set value = excluded.value", [JSON.stringify(Date.now())]);
+  await seedAgenda(c);
 }

@@ -127,3 +127,95 @@
 .page-context-actions .page-extra { margin-left: auto; }
 .menu-accessibility { padding: 12px 0; border-block: 1px solid var(--line); }
 .menu-accessibility .mode-toggle { min-height: 44px; font-size: .95rem; }
+
+/* ---------- Cabeçalho no padrão ge/globo.com ---------- */
+.network-bar { max-width: 1320px; }
+.network-links { gap: 26px; overflow-x: auto; scrollbar-width: none; }
+.network-links::-webkit-scrollbar { display: none; }
+.network-links a { white-space: nowrap; }
+.network-globoplay { color: #e5124e; }
+.network-receitas { color: #a3238e; }
+.network-globopop { color: #1c1c1c; }
+[data-theme='dark'] .network-globopop { color: #f3f5f7; }
+.masthead-left { display: flex; align-items: center; gap: 36px; }
+.masthead-action span { letter-spacing: .02em; font-weight: 800; font-size: .95rem; }
+.masthead-secondary span { font-weight: 800; }
+
+/* ---------- Menu em gaveta pela esquerda ---------- */
+dialog.drawer { margin: 0; padding: 0; border: 0; width: min(380px, 88vw); height: 100vh; max-height: 100vh; inset: 0 auto 0 0; background: var(--surface); color: var(--text); box-shadow: 8px 0 40px rgba(0, 0, 0, .22); animation: drawer-in .24s cubic-bezier(.2, .7, .2, 1); overflow-y: auto; scrollbar-width: thin; }
+dialog.drawer::backdrop { background: rgba(0, 0, 0, .5); animation: drawer-fade .24s ease; }
+dialog.drawer.closing { animation: drawer-out .2s ease forwards; }
+dialog.drawer.closing::backdrop { animation: drawer-fade-out .2s ease forwards; }
+@keyframes drawer-in { from { transform: translateX(-100%); } to { transform: none; } }
+@keyframes drawer-out { to { transform: translateX(-100%); } }
+@keyframes drawer-fade { from { opacity: 0; } }
+@keyframes drawer-fade-out { to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { dialog.drawer, dialog.drawer::backdrop { animation: none !important; } }
+.drawer-body { display: flex; flex-direction: column; }
+.drawer-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 22px 18px 18px 24px; border-bottom: 1px solid var(--line); }
+.drawer-account { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.drawer-account small { color: var(--accent-text); font-weight: 600; font-size: .8rem; }
+.drawer-section { display: flex; flex-direction: column; gap: 6px; padding: 16px 16px 14px; border-bottom: 1px solid var(--line); }
+.drawer-label { padding: 0 8px; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.drawer-links { display: flex; flex-direction: column; gap: 2px; }
+.drawer .nav-link { justify-content: flex-start; gap: 16px; padding: 10px 8px; border-radius: 10px; font-size: 1rem; color: var(--text); }
+.drawer .nav-link svg { width: 24px; height: 24px; stroke-width: 1.7; color: var(--accent-text); }
+.drawer .nav-link .nav-label { display: inline; }
+.drawer .nav-link.on { background: var(--accent-soft); font-weight: 700; box-shadow: none; }
+.drawer-sites { display: flex; flex-direction: column; gap: 2px; }
+.drawer-sites a { display: flex; align-items: center; gap: 14px; padding: 10px 8px; border-radius: 10px; font-family: Arial, sans-serif; font-size: 1.02rem; font-weight: 600; }
+.drawer-sites a:hover { background: var(--surface-2); }
+.site-dot { width: 26px; height: 26px; border-radius: 8px; background: currentColor; opacity: .9; flex: none; }
+.drawer .mode-toggle { padding: 4px 8px; }
+.drawer .more-view { padding: 0 8px; margin: 4px 0 0; }
+.drawer .profile-switch { padding: 0 8px; }
+
+@media (max-width: 1050px) {
+  .masthead-left { gap: 20px; }
+  .masthead-secondary { display: none; }
+}
+@media (max-width: 600px) {
+  .network-links { gap: 18px; font-size: 15px; }
+}
+[data-theme='dark'] .drawer-sites a { filter: brightness(1.45); }
+
+/* Busca no cabeçalho, como no g1: caixa branca que se expande num campo de pesquisa. */
+.header-search { display: flex; align-items: center; gap: 8px; width: 150px; height: 42px; padding: 0 10px 0 12px; border-radius: 6px; background: #fff; color: #8a8a8a; cursor: pointer; transition: width .3s cubic-bezier(.2, .7, .2, 1), box-shadow .2s; }
+.header-search.open { width: min(380px, 34vw); cursor: text; box-shadow: 0 0 0 3px rgba(255, 255, 255, .35); }
+.header-search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; color: #1c1c1c; font: inherit; font-weight: 700; font-size: 1rem; cursor: inherit; }
+.header-search input::placeholder { color: #8a8a8a; font-weight: 800; letter-spacing: .02em; }
+.header-search.open input::placeholder { font-weight: 500; letter-spacing: 0; text-transform: none; }
+.header-search input::-webkit-search-cancel-button { display: none; }
+.header-search-icon, .header-search-clear { display: grid; place-items: center; padding: 0; border: 0; background: none; color: #8a8a8a; cursor: pointer; }
+.header-search.open .header-search-icon { color: #7823a8; }
+.header-search:focus-within { outline: 3px solid #ffd54a; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .header-search { transition: none; } }
+@media (max-width: 760px) {
+  .header-search { width: 42px; padding: 0 11px; }
+  .header-search input { width: 0; }
+  .header-search.open { position: absolute; left: 12px; right: 12px; width: auto; z-index: 5; }
+  .masthead-inner { position: relative; }
+}
+[data-theme='contrast'] .header-search { background: #000; border: 2px solid #fff; color: #fff; }
+[data-theme='contrast'] .header-search input { color: #fff; }
+.header-search input:focus, .header-search input:focus-visible { outline: none; box-shadow: none; }
+
+/* Busca fechada: fundo roxo escuro com texto branco; aberta: caixa branca. */
+.header-search { width: 140px; height: 38px; gap: 6px; padding: 0 12px 0 10px; background: #5e1a85; color: #fff; transition: width .3s cubic-bezier(.2, .7, .2, 1), background-color .2s, box-shadow .2s; }
+.header-search:not(.open):hover { background: #4f1570; }
+.header-search:not(.open) .header-search-icon { color: #fff; }
+.header-search input { font-size: .88rem; }
+.header-search:not(.open) input::placeholder { color: #fff; font-size: .88rem; font-weight: 700; }
+.header-search.open { background: #fff; color: #8a8a8a; }
+.header-search.open input::placeholder { color: #8a8a8a; }
+@media (max-width: 760px) { .header-search { width: 40px; padding: 0 10px; } .header-search.open { width: auto; } }
+.header-search input { padding: 0 0 0 4px; }
+
+/* Marca no estilo do ge: sans arredondada, peso forte mas não pesado, espaçamento normal. */
+.gvila-wordmark { font-family: 'Nunito', 'Arial Rounded MT Bold', Arial, sans-serif; font-weight: 800; font-size: 42px; letter-spacing: -1px; }
+@media (max-width: 600px) { .gvila-wordmark { font-size: 36px; letter-spacing: -.8px; } }
+
+/* Barra de sites no estilo do topo da globo.com: sans arredondada, mais encorpada e um pouco maior. */
+.network-bar { height: 46px; }
+.network-links { gap: 30px; font-family: 'Nunito', Arial, sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -.2px; }
+@media (max-width: 600px) { .network-bar { height: 40px; } .network-links { gap: 20px; font-size: 16.5px; } }

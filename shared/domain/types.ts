@@ -167,6 +167,21 @@ export interface Alert {
   active: boolean;
 }
 
+/** Reportagem planejada pela redação. bairroId null = o Recife inteiro. */
+export type AgendaOutlet = 'g1' | 'ne1' | 'ne2';
+export interface AgendaItem {
+  id: string;
+  title: string;
+  note?: string;
+  /** AAAA-MM-DD, no horário do Recife. */
+  date: string;
+  /** HH:MM, quando já tem horário. */
+  time?: string;
+  outlet: AgendaOutlet;
+  cityId: string;
+  bairroId: string | null;
+}
+
 export interface Report {
   id: string;
   target: ContentKey;
@@ -325,6 +340,8 @@ export interface Db {
   relatoGroups: RelatoGroup[];
   /** Problemas acompanhados ao longo do tempo (notícias + relatos ligados). */
   cases: Case[];
+  /** Reportagens planejadas (agenda), dos últimos 60 dias em diante. */
+  agenda: AgendaItem[];
   /** Só para a equipe (jornalista, moderador, admin). */
   triage?: Record<string, Triage>;
   /** Só para admin. */

@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { AgendaCalendar } from '@/components/agenda';
 import { CaseCard } from '@/components/case-progress';
 import { PageHeader } from '@/components/shell-parts';
 import { EmptyState, PageState, Tabs } from '@/components/ui';
@@ -13,6 +14,14 @@ export default function CasosPage() {
   const [tab, setTab] = useState<'todos' | CaseStage>('todos');
   const [bairro, setBairro] = useState<string>('');
   const [mine, setMine] = useState(false);
+  // Aba e bairro podem vir no endereço (ex.: /casos?aba=agenda&bairro=torre, link da página do bairro).
+  const [view, setView] = useState<'casos' | 'agenda'>('casos');
+  const [agendaScope, setAgendaScope] = useState<string | null>(null);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get('aba') === 'agenda') setView('agenda');
+    setAgendaScope(q.get('bairro') ?? (me.followed.length ? 'meus' : ''));
+  }, [me.followed.length]);
   const scoped = db.cases.filter((c) => (!bairro || c.bairroIds.includes(bairro)) && (!mine || c.bairroIds.some((b) => me.followed.includes(b))));
   const list = tab === 'todos' ? scoped : scoped.filter((c) => c.stage === tab);
   const count = (s: CaseStage) => scoped.filter((c) => c.stage === s).length;
@@ -20,6 +29,13 @@ export default function CasosPage() {
   return (
     <>
       <PageHeader title="Acompanhamento" />
+      <Tabs label="Seção" value={view} onChange={setView} tabs={[{ id: 'casos', label: 'Casos' }, { id: 'agenda', label: 'Agenda de reportagens', count: db.agenda.length }]} />
+      {view === 'agenda' ? (
+        <PageState state={state} retry={retry}>
+          <p className="relatos-intro ag-intro">Quando a redação planeja mostrar o seu bairro no g1, no NE1 ou no NE2. Escolha um bairro para ver só a agenda dele (as reportagens do Recife inteiro aparecem junto).</p>
+          {agendaScope !== null && <AgendaCalendar key={agendaScope} initialScope={agendaScope} />}
+        </PageState>
+      ) : <>
       <div className="relatos-intro">
         <p>Notícias e relatos sobre o mesmo problema, em ordem, para ver se ele já foi resolvido. O progresso segue as notícias oficiais. Relatos de moradores aparecem na linha do tempo marcados como não verificados.</p>
         <div className="row between">
@@ -35,6 +51,7 @@ export default function CasosPage() {
         {list.length ? <ul className="case-list">{list.map((c) => <CaseCard key={c.id} c={c} />)}</ul>
           : <EmptyState title="Nenhum caso nesta seleção" text="Quando um problema aparecer em mais de uma notícia, ele é acompanhado aqui." />}
       </PageState>
+      </>}
     </>
   );
 }

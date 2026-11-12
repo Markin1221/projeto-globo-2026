@@ -1,5 +1,6 @@
 'use client';
 import { CaseCard } from '@/components/case-progress';
+import { AgendaRow } from '@/components/agenda';
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -48,8 +49,18 @@ function Archive({ id }: { id: string }) {
 function Timeline({ id }: { id: string }) {
   const db = useDb();
   const cases = db.cases.filter((c) => c.bairroIds.includes(id));
-  if (!cases.length) return <EmptyState title="Nenhum caso acompanhado" text="Quando um problema do bairro aparecer em mais de uma notícia, o andamento dele aparece aqui." />;
-  return <ul className="case-list">{cases.map((c) => <CaseCard key={c.id} c={c} />)}</ul>;
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Recife' });
+  const next = db.agenda.filter((a) => a.bairroId === id && a.date >= today).slice(0, 3);
+  return (
+    <>
+      <section className="ag-mini" aria-labelledby={`ag-${id}`}>
+        <div className="row between"><h3 id={`ag-${id}`}>Próximas reportagens no bairro</h3><Link className="more-link" href={`/casos?aba=agenda&bairro=${id}`}>Ver o calendário</Link></div>
+        {next.length ? <ul>{next.map((a) => <AgendaRow key={a.id} a={a} />)}</ul> : <p className="muted">Nenhuma reportagem marcada para este bairro.</p>}
+      </section>
+      {cases.length ? <ul className="case-list">{cases.map((c) => <CaseCard key={c.id} c={c} />)}</ul>
+        : <EmptyState title="Nenhum caso acompanhado" text="Quando um problema do bairro aparecer em mais de uma notícia, o andamento dele aparece aqui." />}
+    </>
+  );
 }
 
 export default function BairroPage() {

@@ -1,5 +1,5 @@
 // Cliente da API NestJS. Mantém o último snapshot em memória e recarrega quando o servidor avisa (SSE).
-import type { Bairro, ContentKey, Db, Program, RelatoDraft, RelatoSummary, Role, Topic, CaseItemKind, CaseStage, DaySummaryData } from '@/domain/types';
+import type { Bairro, ContentKey, Db, Program, RelatoDraft, RelatoSummary, Role, Topic, AgendaOutlet, CaseItemKind, CaseStage, DaySummaryData } from '@/domain/types';
 
 export class DomainError extends Error {}
 
@@ -7,7 +7,7 @@ const BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api';
 const TOKEN_KEY = 'bairro-em-pauta:token';
 
 export const EMPTY_DB: Db = {
-  meId: null, meta: { seededAt: 0, tts: false, demoMode: true, ai: false }, relatoGroups: [], cases: [], cities: [], bairros: [], streets: [], users: [], programs: [], segments: [], articles: [],
+  meId: null, meta: { seededAt: 0, tts: false, demoMode: true, ai: false }, relatoGroups: [], cases: [], agenda: [], cities: [], bairros: [], streets: [], users: [], programs: [], segments: [], articles: [],
   relatos: [], relatoContacts: {}, comments: [], alerts: [], reports: [], notifications: [], lockedThreads: [], hiddenContent: [], live: null,
 };
 
@@ -114,8 +114,10 @@ export class HttpApi {
   markRead = (_a: string, id?: string) => this.mutate<void>('POST', '/notifications/read', { id });
   startLive = () => this.mutate<{ segmentId: string }>('POST', '/live/start');
   resetDemo = () => this.mutate<void>('POST', '/demo/reset');
-  daySummary = (bairroId: string) => this.request<DaySummaryData>('POST', '/resumos/dia', { bairroId });
+  daySummary = (bairroId: string, short = false) => this.request<DaySummaryData>('POST', '/resumos/dia', { bairroId, curto: short });
   summarize = (input: { groupId?: string; bairroIds?: string[] }) => this.request<RelatoSummary>('POST', '/resumos', input);
+  createAgenda = (b: { title: string; note?: string; date: string; time?: string; outlet: AgendaOutlet; bairroId: string | null }) => this.mutate<void>('POST', '/agenda', b);
+  deleteAgenda = (id: string) => this.mutate<void>('DELETE', `/agenda/${id}`);
   confirmCase = (caseId: string, label?: string) => this.mutate<{ key: string }>('POST', '/casos/confirmar', { caseId, label });
   setCaseLink = (kind: CaseItemKind, id: string, caseId: string | null) => this.mutate<void>('POST', '/casos/ligar', { kind, id, caseId });
   setCaseStage = (kind: CaseItemKind, id: string, stage: CaseStage | null) => this.mutate<void>('POST', '/casos/etapa', { kind, id, stage });
