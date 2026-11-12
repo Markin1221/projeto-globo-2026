@@ -7,7 +7,7 @@ import { detectBairros, ROLE_LABEL } from '@/domain/rules';
 import { activeAlerts, bairroName, programById, trendingBairros, trendingTopics } from '@/domain/selectors';
 import { act, api, dismissLive, dismissToast, setFont, setGuideOpen, setPrefs, startLiveDemo, stopSpeaking, switchProfile, toast, useDb, useMe, useUi, type Theme } from '@/store';
 import { AlertRow } from './cards';
-import { Avatar, Button, Modal, SearchGlyph } from './ui';
+import { Avatar, Button, Modal } from './ui';
 
 export function ModeToggle() {
   const { prefs } = useUi();
@@ -22,21 +22,17 @@ export function ModeToggle() {
 export const NEXT_THEME: Record<Theme, Theme> = { dark: 'light', light: 'contrast', contrast: 'dark' };
 export const THEME_LABEL: Record<Theme, string> = { dark: 'escuro', light: 'claro', contrast: 'alto contraste' };
 
+// O título permanece disponível para leitores de tela, sem repetir a navegação visual.
 export function PageHeader({ title, back, right }: { title: string; back?: boolean; right?: ReactNode }) {
   const router = useRouter();
-  const { prefs } = useUi();
-  const ThemeIcon = prefs.theme === 'dark' ? Moon : prefs.theme === 'light' ? Sun : Contrast;
   return (
-    <header className="page-head">
-      {back && <button type="button" className="icon-btn" aria-label="Voltar" onClick={() => router.back()}><ArrowLeft size={20} aria-hidden /></button>}
-      <h1>{title}</h1>
-      <div className="page-tools">
+    <>
+      <h1 className="sr-only">{title}</h1>
+      {(back || right) && <div className="page-context-actions">
+        {back && <button type="button" className="icon-btn" aria-label="Voltar" onClick={() => router.back()}><ArrowLeft size={20} aria-hidden /></button>}
         {right && <div className="page-extra">{right}</div>}
-        <ModeToggle />
-        <button type="button" className="icon-btn txt hide-sm" aria-label="Aumentar o tamanho da letra" onClick={() => setFont(0.1)}>A+</button>
-        <button type="button" className="icon-btn hide-sm" aria-label={`Tema ${THEME_LABEL[prefs.theme]}. Trocar tema`} onClick={() => setPrefs({ theme: NEXT_THEME[prefs.theme] })}><ThemeIcon size={19} aria-hidden /></button>
-      </div>
-    </header>
+      </div>}
+    </>
   );
 }
 
@@ -154,15 +150,10 @@ export function SpeechBar() {
 export function RightRail() {
   const db = useDb();
   const me = useMe();
-  const router = useRouter();
-  const [q, setQ] = useState('');
   const live = db.live;
   const alerts = activeAlerts(db, me.followed.length ? me.followed : undefined).slice(0, 3);
   return (
     <aside className="rail" aria-label="Destaques">
-      <form role="search" className="rail-search" onSubmit={(e) => { e.preventDefault(); router.push(`/busca?q=${encodeURIComponent(q)}`); }}>
-        <SearchGlyph /><label className="sr-only" htmlFor="rail-q">Buscar bairro, tema ou palavra</label><input id="rail-q" placeholder="Buscar bairro, tema ou palavra" value={q} onChange={(e) => setQ(e.target.value)} />
-      </form>
       <section className="rail-box on-air" aria-labelledby="onair">
         <h2 id="onair"><Radio size={18} aria-hidden />No ar agora</h2>
         {live && !live.finished ? (

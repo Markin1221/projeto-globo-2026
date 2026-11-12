@@ -6,11 +6,12 @@ import '@fontsource/barlow-condensed/700.css';
 import 'leaflet/dist/leaflet.css';
 import './globals.css';
 import './design.css';
+import './globovila.css';
 import { AppShell } from '@/components/app-shell';
 
 export const metadata: Metadata = {
-  title: 'Amigo da Vizinhança',
-  description: 'Amigo da Vizinhança: o radar do seu bairro. Saiba sempre que ele for pauta nos telejornais. Protótipo com dados de exemplo.',
+  title: 'GloboVila',
+  description: 'GloboVila: o radar do seu bairro. Saiba sempre que ele for pauta nos telejornais. Protótipo com dados de exemplo.',
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
 

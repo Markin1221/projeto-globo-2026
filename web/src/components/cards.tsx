@@ -57,16 +57,16 @@ export function EntryCard({ entry }: { entry: FeedEntry }) {
     const program = programById(db, s.programId)?.name ?? 'Telejornal';
     const href = `/trecho/${s.id}`;
     return (
-      <article className="post">
-        <span className="post-mark program-mark" aria-hidden>{programById(db, s.programId)?.short}</span>
+      <article className="post news-card">
+        <Link className="news-image" href={href} aria-label={`Assistir: ${s.title}`} tabIndex={-1}><PostImage topic={s.topic} seed={s.id} program={program} play live={s.live} /></Link>
         <div className="post-main">
+          <p className="news-kicker">{TOPIC_LABEL[s.topic]}</p>
           <div className="post-meta"><ProgramSeal name={program} />{s.live && <span className="seal seal-live"><b className="live-dot" />Ao vivo</span>}<time className="muted" dateTime={new Date(s.airedAt).toISOString()}>{timeAgo(s.airedAt)}</time><span className="sample">Exemplo</span></div>
           <h3 className="post-title"><Link href={href}>{s.title}</Link></h3>
           <p className="post-text">{s.summary}</p>
           <BairroChips ids={s.bairroIds} />
-          <Link href={href} aria-label={`Assistir: ${s.title}`} tabIndex={-1}><PostImage topic={s.topic} seed={s.id} program={program} play live={s.live} /></Link>
-          <ActionBar target={`segment:${s.id}`} speech={entrySpeech(entry, program)} href={href} title={s.title} />
         </div>
+        <ActionBar target={`segment:${s.id}`} speech={entrySpeech(entry, program)} href={href} title={s.title} />
       </article>
     );
   }
@@ -76,17 +76,17 @@ export function EntryCard({ entry }: { entry: FeedEntry }) {
   const byline = author?.name ?? a.authorName ?? source?.name ?? 'Redação';
   const href = `/materia/${a.id}`;
   return (
-    <article className="post">
-      <span className="post-mark">{author ? <Avatar user={author} size={44} /> : <span className="program-mark source-mark" aria-hidden>{source?.short ?? 'WEB'}</span>}</span>
+    <article className={`post news-card ${a.kind === 'materia' ? '' : 'news-card-text'}`}>
+      {a.kind === 'materia' && <Link className="news-image" href={href} aria-label={`Abrir matéria: ${a.title}`} tabIndex={-1}><PostImage topic={a.topic} seed={a.id} src={a.imageUrl} alt={a.title} /></Link>}
       <div className="post-main">
+        <p className="news-kicker">{TOPIC_LABEL[a.topic]}</p>
         <div className="post-meta">{a.originRelatoId ? <ConfirmedSeal /> : a.url && source ? <SourceSeal name={source.name} /> : <OfficialSeal />}<span className="muted">{a.url && source && byline === source.name ? '' : byline}</span><time className="muted" dateTime={new Date(a.publishedAt).toISOString()}>{timeAgo(a.publishedAt)}</time>{!a.url && <span className="sample">Exemplo</span>}</div>
         <h3 className="post-title"><Link href={href}>{a.title}</Link></h3>
         <p className="post-text">{a.lead}</p>
         <BairroChips ids={a.bairroIds} estimated={a.estimated} />
-        {a.kind === 'materia' && <Link href={href} aria-label={`Abrir matéria: ${a.title}`} tabIndex={-1}><PostImage topic={a.topic} seed={a.id} src={a.imageUrl} alt={a.title} /></Link>}
         {a.originRelatoId && <Link className="origin-link" href={`/relatos/${a.originRelatoId}`}><Link2 size={15} aria-hidden />Ver o relato de origem</Link>}
-        <ActionBar target={`article:${a.id}`} speech={entrySpeech(entry)} href={href} title={a.title} />
       </div>
+      <ActionBar target={`article:${a.id}`} speech={entrySpeech(entry)} href={href} title={a.title} />
     </article>
   );
 }

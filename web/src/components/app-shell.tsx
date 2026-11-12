@@ -2,10 +2,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, Gavel, Home, LayoutDashboard, Map, Menu, Megaphone, Newspaper, PanelLeftClose, PanelLeftOpen, Radar, Route, Search, Settings, Siren, Tv, Users } from 'lucide-react';
+import { Bell, Gavel, Home, LayoutDashboard, Map, Menu, Megaphone, Newspaper, Route, Search, Settings, Siren, Tv, Users } from 'lucide-react';
 import type { Role } from '@/domain/types';
 import { boot, setFont, setPrefs, useDb, useMe, useUi } from '@/store';
-import { DemoGuide, LiveBanner, NEXT_THEME, ProfileSwitcher, RightRail, SpeechBar, THEME_LABEL, Toasts, UserLine } from './shell-parts';
+import { DemoGuide, LiveBanner, ModeToggle, NEXT_THEME, ProfileSwitcher, RightRail, SpeechBar, THEME_LABEL, Toasts, UserLine } from './shell-parts';
+import { SiteHeader } from './site-header';
 import { SimpleMode } from './simple-mode';
 import { ErrorState, Modal, Skeleton } from './ui';
 
@@ -57,7 +58,7 @@ function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => 
   );
 }
 
-export const Logo = () => <span className="logo" aria-hidden><Radar size={26} strokeWidth={1.7} /></span>;
+export { Logo } from './brand';
 
 function FullShell({ children }: { children: ReactNode }) {
   const me = useMe();
@@ -74,24 +75,10 @@ function FullShell({ children }: { children: ReactNode }) {
     main.current?.focus({ preventScroll: true });
   }, [path]);
   return (
-    <div className={`shell ${prefs.navOpen ? 'nav-open' : 'nav-collapsed'}`}>
+    <>
       <a className="skip" href="#conteudo">Pular para o conteúdo</a>
-      <nav className="side" aria-label="Principal" onClick={(e) => { if (!prefs.navOpen && (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('side-links'))) setPrefs({ navOpen: true }); }}>
-        <Link href="/" className="brand" aria-label="Amigo da Vizinhança, início"><Logo /><span className="brand-copy">Amigo da Vizinhança<small>Informação perto de você</small></span></Link>
-        <button type="button" className="nav-link nav-toggle" aria-expanded={!!prefs.navOpen} title={prefs.navOpen ? 'Recolher o menu' : 'Expandir o menu'} onClick={() => setPrefs({ navOpen: !prefs.navOpen })}>
-          <span className="nav-icon">{prefs.navOpen ? <PanelLeftClose size={24} strokeWidth={1.8} aria-hidden /> : <PanelLeftOpen size={24} strokeWidth={1.8} aria-hidden />}</span>
-          <span className="nav-label">{prefs.navOpen ? 'Recolher o menu' : 'Expandir o menu'}</span>
-        </button>
-        <div className="side-links">
-          <div className="nav-group"><p className="nav-section-label">Descobrir</p><NavLinks items={items.filter((n) => n.group === 'descobrir')} /></div>
-          <div className="nav-group"><p className="nav-section-label">Seu espaço</p><NavLinks items={items.filter((n) => n.group === 'espaco')} /></div>
-          {items.some((n) => n.group === 'redacao') && <div className="nav-group"><p className="nav-section-label">Redação</p><NavLinks items={items.filter((n) => n.group === 'redacao')} /></div>}
-        </div>
-        <div className="side-foot">
-          <Link href="/perfil" className={`me-link ${path.startsWith('/perfil') ? 'on' : ''}`} aria-label={`Seu perfil: ${me.name}`} title="Seu perfil"><UserLine /></Link>
-          <ProfileSwitcher /><p className="sample-note">Protótipo. Todo o conteúdo é de exemplo.</p>
-        </div>
-      </nav>
+      <SiteHeader onMenu={() => setMore(true)} />
+      <div className="shell globovila-shell">
       <main id="conteudo" className="center" ref={main} tabIndex={-1}>{children}</main>
       <RightRail />
       <LiveBanner />
@@ -101,6 +88,7 @@ function FullShell({ children }: { children: ReactNode }) {
       </nav>
       <Modal open={more} onClose={() => setMore(false)} title="Menu">
         <Link href="/perfil" className="me-link me-link-more" onClick={() => setMore(false)}><UserLine /><small>Ver perfil</small></Link>
+        <div className="menu-accessibility"><ModeToggle /></div>
         <div className="more-view" role="group" aria-label="Aparência">
           <button type="button" className="btn btn-outline" onClick={() => setFont(-0.1)} aria-label="Diminuir a letra">A−</button>
           <button type="button" className="btn btn-outline" onClick={() => setFont(0.1)} aria-label="Aumentar a letra">A+</button>
@@ -111,6 +99,7 @@ function FullShell({ children }: { children: ReactNode }) {
       </Modal>
       <DemoGuide />
     </div>
+    </>
   );
 }
 
@@ -119,11 +108,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [attempt, setAttempt] = useState(0);
   const { prefs } = useUi();
   useEffect(() => { boot().then(() => setReady('ready'), () => setReady('error')); }, [attempt]);
-  if (ready === 'loading') return <div className="boot"><Skeleton rows={3} /></div>;
-  if (ready === 'error') return <div className="boot"><ErrorState onRetry={() => { setReady('loading'); setAttempt((a) => a + 1); }} /></div>;
+  if (ready === 'loading') return <><SiteHeader /><div className="boot"><Skeleton rows={3} /></div></>;
+  if (ready === 'error') return <><SiteHeader /><div className="boot"><ErrorState onRetry={() => { setReady('loading'); setAttempt((a) => a + 1); }} /></div></>;
   return (
     <>
-      {prefs.simple ? <SimpleMode /> : <FullShell>{children}</FullShell>}
+      {prefs.simple ? <><SiteHeader /><SimpleMode /></> : <FullShell>{children}</FullShell>}
       <SpeechBar />
       <Toasts />
     </>

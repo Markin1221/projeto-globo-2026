@@ -1,7 +1,6 @@
 'use client';
 import { Fragment, useMemo, useState } from 'react';
-import { ArrowUp, MapPin, ArrowUpRight } from 'lucide-react';
-import Link from 'next/link';
+import { ArrowUp } from 'lucide-react';
 import { BairroPicker } from '@/components/dialogs';
 import { DaySummary } from '@/components/day-summary';
 import { EntryCard, ResidentsBlock } from '@/components/cards';
@@ -35,22 +34,9 @@ export default function HomePage() {
   return (
     <>
       <PageHeader title="Início" />
-      <section className="home-intro" aria-labelledby="home-title">
-        <div className="home-intro-copy">
-          <p className="eyebrow"><MapPin size={14} aria-hidden />GRANDE RECIFE</p>
-          <h2 id="home-title">Sua cidade.<br /><span>Seu dia a dia.</span></h2>
-          <p>As notícias que importam, mais perto de você.</p>
-        </div>
-        <Link className="intro-map" href="/mapa" aria-label="Explorar o mapa dos bairros">
-          <span className="radar-art" aria-hidden><span /><span /><span /><MapPin size={27} strokeWidth={1.5} /></span>
-          <span>Explorar o mapa <ArrowUpRight size={14} aria-hidden /></span>
-        </Link>
-      </section>
       <Tabs label="Escopo do feed" value={scope} onChange={setScope} tabs={[{ id: 'meus', label: 'Meus bairros' }, { id: 'todos', label: 'Grande Recife' }]} />
       <PageState state={state} retry={retry}>
-        <div className="home-top">
-          {ids.length > 0 && <DailySummary ids={ids} />}
-        </div>
+        {ids.length > 0 && <div className="home-top"><DailySummary ids={ids} /></div>}
         <label className="check useful-toggle"><input type="checkbox" checked={useful} onChange={(e) => setUseful(e.target.checked)} />Só o que muda o dia a dia (trânsito, água, saúde, obras, prazos)</label>
         {fresh > 0 && <button type="button" className="fresh-pill" onClick={() => { setCutoff(Date.now()); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><ArrowUp size={16} aria-hidden />{fresh === 1 ? '1 nova publicação' : `${fresh} novas publicações`}</button>}
         {shown.length === 0 && scope === 'meus'

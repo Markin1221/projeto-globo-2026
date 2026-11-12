@@ -268,7 +268,7 @@ export function SimpleMode() {
   return (
     <div className="simple">
       <header className="s-top">
-        <span className="brand-sm">Amigo da Vizinhança</span>
+        <span className="brand-sm">GloboVila</span>
         <div className="s-top-acts">
           <Button big aria-label="Aumentar a letra" onClick={() => setFont(0.1)}>A+<span className="s-top-hint">Letra maior</span></Button>
           <Button big onClick={() => { stopSpeaking(); setPrefs({ simple: false }); }}>Modo completo</Button>
