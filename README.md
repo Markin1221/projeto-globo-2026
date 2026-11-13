@@ -1,14 +1,14 @@
-# Amigo da Vizinhança
+# GloboVila
 
-Radar de notícias locais para o Desafio Globo no Rec'n'Play 2026. O app avisa o morador quando o bairro dele vira pauta nos telejornais e portais, organiza o acervo por bairro e acompanha cada problema até a solução. Os relatos de moradores ficam separados, com um aviso permanente de que não foram verificados. O conteúdo que vem no banco é de exemplo; com o scraper, entram notícias reais do g1 PE.
+Radar de notícias locais para o Desafio Globo no Rec'n'Play 2026. O app avisa o morador quando o bairro dele vira pauta nos telejornais e portais, organiza o acervo por bairro e acompanha cada problema até a solução. Os relatos de moradores ficam separados, com um aviso permanente de que não foram verificados. O banco vem com conteúdo de exemplo; com o scraper, entram notícias reais do g1 PE, com foto e link para a matéria original. O visual segue os portais da Globo: barra de sites no topo, faixa roxa com MENU, logo `gvila` e busca, e menu lateral com as seções do app e os sites da Globo.
 
 ## O que o app faz
 
 | Para quem | O quê |
 | --- | --- |
-| Morador | Segue bairros, recebe a tarja quando o bairro aparece num telejornal ao vivo e vê o resumo do dia feito por IA. Navega pelo mapa da cidade sobre o OpenStreetMap e acompanha casos ("o buraco foi consertado?"). Pode enviar um relato e confirmar o de um vizinho. |
+| Morador | Abre o app num carrossel com as principais notícias reais do g1 e um resumo curto do dia, feito por IA para dar vontade de assistir na TV. Segue bairros, recebe a tarja quando o bairro aparece num telejornal ao vivo, vê no calendário quando vai sair reportagem no bairro dele (g1, NE1 ou NE2) e acompanha casos ("o buraco foi consertado?"). Na Voz dos moradores, envia um relato, confirma o de um vizinho e filtra por bairro e por assunto. Pesquisa pela busca do cabeçalho. |
 | Quem tem dificuldade para ler | Modo Simples: notícias em letras grandes, filtro por bairro no topo, leitura em voz alta uma por uma, voz neural em português e a situação de cada problema. |
-| Jornalista | Fila de relatos com triagem automática (risco, prioridade, possíveis duplicados), relatos agrupados por assunto com resumo, confirmação ou descarte, que só um humano faz, e acompanhamento dos casos. |
+| Jornalista | Fila de relatos com triagem automática (risco, prioridade, possíveis duplicados), relatos agrupados por assunto com o resumo completo da IA (o morador vê a versão curta), confirmação ou descarte, que só um humano faz, acompanhamento dos casos e cadastro de reportagens na agenda. |
 | Moderador e admin | Denúncias, conteúdo oculto, fontes, bairros, modelos e histórico das importações do g1. |
 
 Regras que não mudam: todo relato carrega o selo **INFORMAL · NÃO VERIFICADO · PODE SER FALSO**; só um jornalista muda o status de um relato; nome, telefone e endereço de quem relata só aparecem para a redação e para o próprio autor; nenhuma IA decide o que é fato.
@@ -61,7 +61,7 @@ docker compose exec db psql -U bairro bairro               # abrir o banco
 
 1. No Windows, libere a porta 80 no firewall (PowerShell como administrador):
    ```powershell
-   New-NetFirewallRule -DisplayName "Amigo da Vizinhanca 80" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow -Profile Any
+   New-NetFirewallRule -DisplayName "GloboVila 80" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow -Profile Any
    ```
 2. Rode `ipconfig` e anote o "Endereço IPv4" do Wi-Fi (ignore os de VPN e WSL).
 3. No celular, no mesmo Wi-Fi, abra `http://ESSE-IP`, com `http://` na frente.
@@ -70,17 +70,15 @@ Redes de faculdade, hotel e eventos costumam isolar os aparelhos entre si. Nesse
 
 ## Apresentação
 
-Sugestão de roteiro para a banca (7 passos):
+O pitch tem 5 minutos. O roteiro (duas pessoas, cerca de 4 minutos de fala) está no doc "Roteiro do pitch GloboVila". A demonstração ao vivo segue esta ordem:
 
-1. Seguir Casa Amarela e ver o resumo do dia.
-2. Simular um telejornal ao vivo: a transcrição detecta o bairro e dispara a tarja.
-3. Marina envia um relato e três vizinhos confirmam.
-4. Ver os relatos por assunto e o resumo com IA.
-5. Helena, a jornalista, apura com a ajuda da triagem e confirma o relato, que vira post oficial.
-6. Acompanhar o buraco da Rua Alto do Céu: foi tapado e voltou a abrir.
-7. Modo Simples em voz alta.
+1. Página inicial: carrossel de notícias e resumo curto do dia.
+2. Mapa: os bairros com notícia acendem.
+3. "Simular telejornal ao vivo": o NE2 cita Casa Amarela e chega a tarja de alerta.
+4. Acompanhamento: o calendário com as reportagens previstas no bairro.
+5. Voz dos moradores: relato, "Eu também vi" e o resumo com IA.
 
-Se sobrar tempo, mostre o mapa, o Painel do Jornalista e o Admin. Para voltar tudo ao início (apaga o que foi feito na demonstração, para todos): `docker compose exec api node dist/api/src/main.js --reset`.
+Se sobrar tempo, mostre o Modo Simples e o Painel do Jornalista. Para voltar tudo ao início (apaga o que foi feito na demonstração, para todos): `docker compose exec api node dist/api/src/main.js --reset`.
 
 ## Rodar na sua máquina, sem Docker para o app
 
@@ -106,6 +104,7 @@ O esquema está em `db/migrations/`, comentado:
 | `003_resumos.sql` | Cache dos resumos com IA. |
 | `004_resumo_dia.sql` | Resumo do dia. |
 | `005_casos.sql` | Acompanhamento de casos. |
+| `006_agenda.sql` | Agenda de reportagens (dia, horário, g1/NE1/NE2, bairro ou Recife inteiro). |
 
 As tabelas, por grupo:
 
@@ -113,15 +112,39 @@ As tabelas, por grupo:
 - **Notícias:** `sources` (programas e portais), `news_items` (trecho de telejornal, matéria ou post oficial, com `url` única para deduplicar), `news_item_bairros` (com o método: citado, por ponto de referência ou previsto), `transcript_lines`, `topics` e `ingest_runs`.
 - **Casos:** `issues` (o caso confirmado). Os itens apontam para ele por `issue_id`, com etapa (`case_stage`) e exclusão (`case_unlinked`) definidas pela redação.
 - **Relatos:** `relatos`, `relato_contacts` (tabela separada, só para redação e autor), `relato_confirmations` e `relato_status_history`.
+- **Agenda:** `agenda` (o que a redação planeja mostrar; só jornalista e admin cadastram).
 - **IA:** `ai_summaries` (resumos guardados, para não pagar duas vezes).
 - **Comunidade:** `comments`, `user_saves`, `reports`, `hidden_content`, `locked_threads`, `alerts` e `notifications`.
 - **Pessoas:** `users` e `user_follows`.
 
-Para mudar o esquema, crie `db/migrations/006_....sql`. A API aplica arquivos novos na próxima subida.
+Para mudar o esquema, crie `db/migrations/007_....sql`. A API aplica arquivos novos na próxima subida.
 
 ## Notícias reais do g1
 
-Preencha `INGEST_API_KEY` no `.env` e rode `docker compose --profile scraper up -d`. O scraper respeita o `robots.txt` e entra por `POST /api/ingest/news`. A API deduplica e descobre o bairro (pelo nome, por ponto de referência ou rua conhecida e, em último caso, pelo modelo). Também identifica se a notícia é do Recife, da região metropolitana ou de fora, e liga a notícia aos casos abertos. Opções como carga histórica (`--paginas`, `--desde`) e reprocessamento estão em `docs/INGESTAO.md`.
+Preencha `INGEST_API_KEY` no `.env`. O scraper respeita o `robots.txt` e entra por `POST /api/ingest/news`. A API deduplica, descobre o bairro e o tema, identifica se a notícia é do Recife, da região metropolitana ou de fora, e liga a notícia aos casos abertos.
+
+```bash
+docker compose --profile scraper up -d                                       # coleta contínua
+docker compose run --rm scraper node g1.mjs --paginas 40 --desde 2026-10-30  # carga dos últimos dias
+docker compose run --rm scraper node g1.mjs --paginas 40 --desde 2026-10-30 --reprocessar  # refaz bairro e tema
+```
+
+Acrescente `--simular` para ver o que seria enviado sem gravar nada. Mais opções em `docs/INGESTAO.md`.
+
+Como o bairro é escolhido:
+
+- Se o título ou a linha fina dizem o bairro, os bairros citados só no meio do texto (delegacia, IML, hospital) não contam.
+- Se o título fala de outra cidade ("em Olinda", "em PE e SP") e não cita o Recife, os bairros do Recife achados no texto não contam.
+- Ponto de referência e previsão do modelo só entram quando o texto não deu nenhum bairro.
+- Mais de 6 bairros: a notícia fica geral, sem bairro (feriados, balanços, serviços da cidade).
+
+O tema soma pistas: palavra no título vale 3, na linha fina 2 e no texto 1. Uma pista solta no meio da matéria não decide o tema.
+
+O carrossel da página inicial mostra só notícias reais (com link da fonte) das últimas 2 semanas; os exemplos só aparecem se não houver nenhuma. Para tirar do banco as matérias e posts de exemplo, mantendo os trechos de telejornal usados na demonstração:
+
+```bash
+docker compose exec db psql -U bairro -d bairro -c "delete from news_items where kind in ('materia','post') and url is null;"
+```
 
 ## Mapa
 
@@ -131,7 +154,7 @@ As imagens são carregadas diretamente pelo navegador, com atribuição visível
 
 ## IA para os resumos
 
-A IA escreve o resumo do dia de cada bairro (só com notícias e alertas oficiais) e o resumo dos relatos ("o que tem neste bloco, o que pode ser urgente"). Opções grátis, no `.env`:
+A IA escreve o resumo do dia de cada bairro (só com notícias e alertas oficiais) e o resumo dos relatos. Há duas versões: para o morador, um resumo mínimo, que convida a assistir ao telejornal; para o jornalista, o resumo completo, com a utilidade de cada item, para saber se tem algo que vira pauta. Opções grátis, no `.env`:
 
 | Variável | Serviço |
 | --- | --- |
