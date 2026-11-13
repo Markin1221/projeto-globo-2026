@@ -12,7 +12,7 @@ import './globovila.css';
 import { AppShell } from '@/components/app-shell';
 
 export const metadata: Metadata = {
-  title: 'GloboVila',
+  title: 'gvila',
   description: 'GloboVila: o radar do seu bairro. Saiba sempre que ele for pauta nos telejornais. Protótipo com dados de exemplo.',
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 };

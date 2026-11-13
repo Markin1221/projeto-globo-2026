@@ -46,7 +46,8 @@ export function StatusSeal({ status }: { status: RelatoStatus }) {
   return <span className="seal seal-neutral"><Clock3 size={15} aria-hidden />{STATUS_LABEL[status]}</span>;
 }
 
-export function InformalNotice() {
+export function InformalNotice({ compact }: { compact?: boolean } = {}) {
+  if (compact) return <span className="informal-notice compact" title={INFORMAL_WARNING}><InformalSeal /><span className="sr-only">{INFORMAL_WARNING}</span></span>;
   return <div className="informal-notice"><InformalSeal /><p>{INFORMAL_WARNING}</p></div>;
 }
 

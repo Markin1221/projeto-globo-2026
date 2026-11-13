@@ -15,11 +15,11 @@ export default function CasosPage() {
   const [bairro, setBairro] = useState<string>('');
   const [mine, setMine] = useState(false);
   // Aba e bairro podem vir no endereço (ex.: /casos?aba=agenda&bairro=torre, link da página do bairro).
-  const [view, setView] = useState<'casos' | 'agenda'>('casos');
+  const [view, setView] = useState<'casos' | 'agenda'>('agenda');
   const [agendaScope, setAgendaScope] = useState<string | null>(null);
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
-    if (q.get('aba') === 'agenda') setView('agenda');
+    if (q.get('aba') === 'casos') setView('casos');
     setAgendaScope(q.get('bairro') ?? (me.followed.length ? 'meus' : ''));
   }, [me.followed.length]);
   const scoped = db.cases.filter((c) => (!bairro || c.bairroIds.includes(bairro)) && (!mine || c.bairroIds.some((b) => me.followed.includes(b))));
@@ -29,16 +29,14 @@ export default function CasosPage() {
   return (
     <>
       <PageHeader title="Acompanhamento" />
-      <Tabs label="Seção" value={view} onChange={setView} tabs={[{ id: 'casos', label: 'Casos' }, { id: 'agenda', label: 'Agenda de reportagens', count: db.agenda.length }]} />
+      <Tabs label="Seção" value={view} onChange={setView} tabs={[{ id: 'agenda', label: 'Agenda de reportagens', count: db.agenda.length }, { id: 'casos', label: 'Casos', count: db.cases.length }]} />
       {view === 'agenda' ? (
         <PageState state={state} retry={retry}>
-          <p className="relatos-intro ag-intro">Quando a redação planeja mostrar o seu bairro no g1, no NE1 ou no NE2. Escolha um bairro para ver só a agenda dele (as reportagens do Recife inteiro aparecem junto).</p>
           {agendaScope !== null && <AgendaCalendar key={agendaScope} initialScope={agendaScope} />}
         </PageState>
       ) : <>
-      <div className="relatos-intro">
-        <p>Notícias e relatos sobre o mesmo problema, em ordem, para ver se ele já foi resolvido. O progresso segue as notícias oficiais. Relatos de moradores aparecem na linha do tempo marcados como não verificados.</p>
-        <div className="row between">
+      <div className="page-toolbar">
+        <div className="row between page-toolbar-row">
           <label className="check"><input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} />Só dos bairros que sigo</label>
           <select aria-label="Bairro" value={bairro} onChange={(e) => setBairro(e.target.value)}>
             <option value="">Todos os bairros</option>

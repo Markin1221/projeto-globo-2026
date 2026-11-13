@@ -6,7 +6,7 @@ import { canConfirm, NEIGHBOR_NOTE, relatoSpeech, TOPIC_LABEL } from '@/domain/r
 import { bairroName, commentCount, entrySpeech, listedRelatos, programById, userById } from '@/domain/selectors';
 import type { Alert, AlertType, ContentKey, FeedEntry, Relato } from '@/domain/types';
 import { act, actorId, api, speak, toast, useDb, useMe, useUi } from '@/store';
-import { ReportDialog, shareOfficial, ShareRelatoDialog } from './dialogs';
+import { ReportDialog, shareOfficial } from './dialogs';
 import { MediaMock, PostImage } from './media';
 import { Avatar, Button, ConfirmedSeal, InformalNotice, OfficialSeal, SourceSeal, ProgramSeal, StatusSeal, timeAgo, agoText } from './ui';
 
@@ -115,13 +115,20 @@ export function ConfirmButton({ relato, big }: { relato: Relato; big?: boolean }
 export function RelatoCard({ relato }: { relato: Relato }) {
   const db = useDb();
   const author = userById(db, relato.authorId);
-  const [share, setShare] = useState(false);
+  const [report, setReport] = useState(false);
   const name = bairroName(db, relato.bairroId);
   const href = `/relatos/${relato.id}`;
+  const target: ContentKey = `relato:${relato.id}`;
   return (
-    <article className="relato">
-      <InformalNotice />
+    <article className="relato relato-card">
       <div className="relato-in">
+        <div className="relato-top">
+          <InformalNotice compact />
+          <div className="relato-tools">
+            <ListenButton id={target} text={relatoSpeech(relato, name)} />
+            <button type="button" className="act" aria-label="Denunciar este relato" title="Denunciar" onClick={() => setReport(true)}><Flag size={18} aria-hidden /></button>
+          </div>
+        </div>
         <div className="post-meta"><StatusSeal status={relato.status} /><span className="muted-relato">{TOPIC_LABEL[relato.category]}</span><time className="muted-relato">{timeAgo(relato.createdAt)}</time><span className="sample">Exemplo</span></div>
         <h3 className="post-title"><Link href={href}>{relato.title}</Link></h3>
         <p className="post-text">{relato.description}</p>
@@ -129,9 +136,8 @@ export function RelatoCard({ relato }: { relato: Relato }) {
         {relato.media && <MediaMock media={relato.media} />}
         {relato.officialArticleId && <Link className="origin-link" href={`/materia/${relato.officialArticleId}`}><Link2 size={15} aria-hidden />Ler o post oficial da redação</Link>}
         <ConfirmButton relato={relato} />
-        <ActionBar target={`relato:${relato.id}`} speech={relatoSpeech(relato, name)} href={href} title={relato.title} onShare={() => setShare(true)} />
       </div>
-      <ShareRelatoDialog relato={relato} open={share} onClose={() => setShare(false)} />
+      <ReportDialog target={target} open={report} onClose={() => setReport(false)} />
     </article>
   );
 }

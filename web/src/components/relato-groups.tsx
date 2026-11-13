@@ -15,7 +15,7 @@ const UTIL_LABEL = { alta: 'Útil', media: 'Média', baixa: 'Pouco útil' } as c
 const SUMMARY_PREFIX = 'Atenção: resumo de relatos de moradores, ainda não verificados e que podem ser falsos.';
 
 /** Botão + cartão de resumo. groupId: resume um grupo. Sem groupId: resumo geral (opcionalmente de alguns bairros). */
-export function SummaryCard({ groupId, bairroIds, label, compact }: { groupId?: string; bairroIds?: string[]; label: string; compact?: boolean }) {
+export function SummaryCard({ groupId, bairroIds, label, compact, noNote }: { groupId?: string; bairroIds?: string[]; label: string; compact?: boolean; noNote?: boolean }) {
   const db = useDb();
   const staff = canEditCases(useMe());
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
@@ -33,7 +33,7 @@ export function SummaryCard({ groupId, bairroIds, label, compact }: { groupId?: 
         <Button variant={compact ? 'outline' : 'primary'} busy={state === 'loading'} onClick={run}>
           <Sparkles size={16} aria-hidden />{state === 'loading' ? 'Resumindo' : label}
         </Button>
-        {!compact && <small className="muted">{staff ? 'Versão da redação: todos os relatos, com a utilidade de cada um.' : 'Um resumo curto do que os vizinhos estão dizendo.'} {db.meta.ai ? 'Feito por IA.' : 'Automático.'} Os relatos não foram verificados.</small>}
+        {!compact && !noNote && <small className="muted">{staff ? 'Versão da redação: todos os relatos, com a utilidade de cada um.' : 'Um resumo curto do que os vizinhos estão dizendo.'} {db.meta.ai ? 'Feito por IA.' : 'Automático.'} Os relatos não foram verificados.</small>}
         {state === 'error' && <small className="err" role="alert">{error}</small>}
       </div>
     );
