@@ -159,7 +159,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (ready === 'error') return <><SiteHeader /><div className="boot"><ErrorState onRetry={() => { setReady('loading'); setAttempt((a) => a + 1); }} /></div></>;
   return (
     <>
-      {prefs.simple ? <><SiteHeader /><SimpleMode /></> : <FullShell>{children}</FullShell>}
+      {prefs.simple ? <><SiteHeader simple /><SimpleMode /></> : <FullShell>{children}</FullShell>}
       <SpeechBar />
       <Toasts />
     </>

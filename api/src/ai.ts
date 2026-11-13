@@ -204,7 +204,7 @@ function fallback(inp: Input): RelatoSummary {
     : `Assunto principal: ${TOPIC_LABEL[rs[0].category].toLowerCase()}.`;
   return {
     ...base,
-    summary: `${rs.length} ${rs.length === 1 ? 'relato' : 'relatos'} de moradores (${bairros.slice(0, 3).join(', ')}${bairros.length > 3 ? ' e outros bairros' : ''}), o mais recente há ${newest < 1 ? 'menos de 1 hora' : `${Math.round(newest)} h`}. ${topics} Somam ${conf} confirmações de vizinhos.`,
+    summary: `${rs.length} ${rs.length === 1 ? 'relato' : 'relatos'} de moradores (${bairros.slice(0, 3).join(', ')}${bairros.length > 3 ? ' e outros bairros' : ''}), o mais recente ${newest < 1 ? 'há menos de 1 hora' : newest < 24 ? `há ${Math.round(newest)} h` : newest < 48 ? 'de ontem' : `há ${Math.round(newest / 24)} dias`}. ${topics} Somam ${conf} confirmações de vizinhos.`,
     points: rs.slice(0, 8).map((r) => `${r.title} (${name(r.bairroId)}, ${r.confirmations.length} confirmações)`),
     // Sem IA, a utilidade vem de sinais simples: detalhe de local, mídia e confirmações.
     items: rs.map((r) => {

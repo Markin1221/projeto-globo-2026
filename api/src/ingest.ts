@@ -1,7 +1,7 @@
 // Ingestão de notícias de fontes externas (ex.: o scraper do G1). Idempotente por URL.
 import { createHash } from 'node:crypto';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { classifyTopic, detectBairros, normalize, stripAccents, TOPIC_LABEL } from '../../shared/domain/rules';
+import { classifyTopic, classifyTopicParts, detectBairros, normalize, stripAccents, TOPIC_LABEL } from '../../shared/domain/rules';
 import type { Bairro, Street } from '../../shared/domain/types';
 import { pool, q, tx, type Conn } from './db';
 import { getLocationModel, retrainSoon } from './ml/models';
@@ -89,7 +89,11 @@ export async function analyzeContext(): Promise<AnalyzeCtx> {
 export async function analyzeNews(c: Conn, id: string, item: Pick<IngestItem, 'title' | 'summary' | 'body' | 'detectText' | 'transcript' | 'bairroIds'>, ctx: AnalyzeCtx, opts: { keepDetected?: boolean } = {}) {
   const bairros = ctx.bairros.filter((b) => b.active);
   const text = [item.title, item.summary, item.body, item.detectText, ...(item.transcript ?? []).map((l) => l.text)].filter(Boolean).join('\n');
-  const found = detectFor(text, bairros);
+  const all = detectFor(text, bairros);
+  // Se o título ou a linha fina já dizem o bairro, os nomes que só aparecem no meio do texto costumam ser
+  // lugares de passagem (delegacia, IML, hospital, "leia também") e não o bairro da notícia.
+  const lead = detectFor([item.title, item.summary].filter(Boolean).join('\n'), bairros);
+  const found = lead.size ? new Map([...all].filter(([b]) => lead.has(b))) : all;
   await q(`delete from news_item_bairros where news_item_id = $1 and method in (${opts.keepDetected ? "'referencia', 'previsto'" : "'detectado', 'referencia', 'previsto'"})`, [id], c);
   for (const [bairroId, match] of found) {
     await q("insert into news_item_bairros (news_item_id, bairro_id, method, matched_text) values ($1,$2,'detectado',$3) on conflict do nothing", [id, bairroId, match], c);
@@ -102,9 +106,22 @@ export async function analyzeNews(c: Conn, id: string, item: Pick<IngestItem, 't
   const detected = [...new Set([...found.keys(), ...manual])];
   const body = [item.body, item.detectText, ...(item.transcript ?? []).map((l) => l.text)].filter(Boolean).join('\n');
   const loc = locate({ title: item.title, summary: item.summary, text: body }, { ...ctx, bairros, detected, model: getLocationModel() });
+  // Título ou linha fina falam de outra cidade ("fechadas em Olinda") e não citam o Recife nem um bairro:
+  // os bairros do Recife achados só no meio do texto não são o lugar da notícia.
+  const leadEv = loc.evidence.filter((e) => e.field !== 'texto');
+  const otherCity = !lead.size && leadEv.some((e) => e.scope !== 'recife') && !leadEv.some((e) => e.scope === 'recife');
+  if (otherCity) {
+    const recifeIds = new Set(bairros.filter((b) => b.cityId === 'recife').map((b) => b.id));
+    const drop = detected.filter((b) => recifeIds.has(b) && !(item.bairroIds ?? []).includes(b));
+    if (drop.length) {
+      await q("delete from news_item_bairros where news_item_id = $1 and method <> 'manual' and bairro_id = any($2)", [id, drop], c);
+      detected.splice(0, detected.length, ...detected.filter((b) => !drop.includes(b)));
+    }
+  }
   // Fora da Região Metropolitana, pontos de referência e previsões do modelo não valem.
   const local = loc.scope === 'recife' || loc.scope === 'rmr' || loc.scope === 'indefinido';
-  if (local) {
+  // Pontos de referência e previsão do modelo só completam quando o texto não deu nenhum bairro.
+  if (local && !detected.length && !otherCity) {
     for (const l of loc.landmarks) await q("insert into news_item_bairros (news_item_id, bairro_id, method, matched_text, confidence) values ($1,$2,'referencia',$3,0.85) on conflict do nothing", [id, l.bairroId, `Ponto de referência: ${l.name}`], c);
     if (loc.predicted) await q("insert into news_item_bairros (news_item_id, bairro_id, method, matched_text, confidence) values ($1,$2,'previsto',$3,$4) on conflict do nothing",
       [id, loc.predicted.bairroId, `Previsto pelo modelo${loc.predicted.words.length ? ` (palavras: ${loc.predicted.words.join(', ').replace(/_/g, ' ')})` : ''}`, loc.predicted.p], c);
@@ -112,8 +129,17 @@ export async function analyzeNews(c: Conn, id: string, item: Pick<IngestItem, 't
   const util = newsUtility(item.title, item.summary ?? '', body);
   await q('update news_items set location_scope = $2, location_city = $3, utility = $4, ml = $5 where id = $1', [id, loc.scope, loc.city ?? null, util.score,
     JSON.stringify({ location: { scope: loc.scope, city: loc.city, confidence: loc.confidence, evidence: loc.evidence, landmarks: loc.landmarks, predicted: loc.predicted }, utility: util })], c);
-  return [...new Set([...detected, ...(local ? loc.landmarks.map((l) => l.bairroId) : []), ...(local && loc.predicted ? [loc.predicted.bairroId] : [])])];
+  const result = [...new Set([...detected, ...(local && !detected.length && !otherCity ? [...loc.landmarks.map((l) => l.bairroId), ...(loc.predicted ? [loc.predicted.bairroId] : [])] : [])])];
+  // Muitos bairros = notícia geral da cidade (feriado, serviços, balanço): fica sem bairro, como "Recife inteiro".
+  if (result.length > MAX_BAIRROS) {
+    await q("delete from news_item_bairros where news_item_id = $1 and method <> 'manual'", [id], c);
+    return (item.bairroIds ?? []).filter((b) => valid.has(b));
+  }
+  return result;
 }
+
+/** Acima disso a notícia é tratada como geral, sem bairro. */
+const MAX_BAIRROS = 6;
 
 /** Recalcula localização e utilidade de todas as notícias com o texto que está no banco. */
 export async function recomputeAll() {
@@ -151,7 +177,7 @@ export async function ingestNews(apiKey: string | undefined, body: IngestBody) {
         continue;
       }
       const kind = item.kind === 'trecho' ? 'trecho' : 'materia';
-      const topic = item.topic && item.topic in TOPIC_LABEL ? item.topic : classifyTopic(`${item.title} ${item.summary ?? ''} ${item.body ?? ''} ${(item.detectText ?? '').slice(0, 3000)}`);
+      const topic = item.topic && item.topic in TOPIC_LABEL ? item.topic : classifyTopicParts({ title: item.title, summary: item.summary, body: `${item.body ?? ''} ${item.detectText ?? ''}` });
       const h = hash(item);
       const [existing] = await q('select id, content_hash from news_items where url = $1', [url], c);
       if (existing && existing.content_hash === h && !body.force) { report.push({ url, status: 'igual', id: existing.id }); continue; }

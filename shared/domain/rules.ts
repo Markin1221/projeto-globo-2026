@@ -178,11 +178,11 @@ const TOPIC_HINTS: [Topic, RegExp][] = [
   ['alagamento', /alag|enchente|inunda|chuva forte|barreira|desliza|transbord/],
   ['agua', /falta d.agua|abastecimento|compesa|adutora|sem agua|vazamento de agua/],
   ['vacinacao', /vacin|imuniza/],
-  ['transito', /transito|engarraf|interdi|semaforo|congestion|acidente/],
+  ['transito', /transito|engarraf|interdi\w* (d[aeo]s?|n[aeo]s?) (rua|via|avenida|pista|faixa|ponte|viaduto|trecho|br)\b|semaforo|congestion|acidente de transito|colisao|batida entre/],
   ['transporte', /onibus|\bmetro\b|terminal integrado|\bbrt\b|ciclovia/],
-  ['obras', /\bobras?\b|buraco|asfalt|paviment|drenagem|cratera/],
-  ['seguranca', /assalt|policia|homicid|\btiros?\b|crime|roubo|furto|\bpres[oa]s?\b|assassin/],
-  ['saude', /saude|hospital|upa\b|ubs\b|dengue|medico/],
+  ['obras', /\bobras?\b(?! de arte)|buraco|asfalt|paviment|drenagem|cratera/],
+  ['seguranca', /assalt|policia|homicid|\btiros?\b|crime|criminos|roubo|furto|\bpres[oa]s?\b|\bprisao|assassin|feminicid|trafico|quadrilha|lavagem de (dinheiro|capital)|operacao (policial|da pf|da policia)|delegacia|baleado/],
+  ['saude', /saude|hospital|upa\b|ubs\b|dengue|medico|vigilancia sanitaria|anvisa|bronzeamento|doenca|paciente/],
   ['educacao', /escola|aluno|matricula|creche|universidade|professor/],
   ['meio-ambiente', /lixo|mangue|poluicao|esgoto|arvore|meio ambiente/],
   // "feira" sozinha: não pega "quinta-feira".
@@ -193,6 +193,24 @@ const TOPIC_HINTS: [Topic, RegExp][] = [
 export function classifyTopic(text: string): Topic {
   const hay = normalize(text);
   return TOPIC_HINTS.find(([, re]) => re.test(hay))?.[0] ?? 'geral';
+}
+
+/**
+ * Tema pela soma de pistas: título vale 3, linha fina 2, texto 1 por ocorrência (até 3).
+ * Evita que uma palavra solta no meio da matéria ("interditado", "obras de arte") decida o tema.
+ */
+export function classifyTopicParts(p: { title: string; summary?: string; body?: string }): Topic {
+  const parts: [string, number][] = [[normalize(p.title), 3], [normalize(p.summary ?? ''), 2], [normalize((p.body ?? '').slice(0, 4000)), 1]];
+  let best: Topic = 'geral';
+  let top = 0;
+  for (const [topic, re] of TOPIC_HINTS) {
+    const g = new RegExp(re.source, 'g');
+    let score = 0;
+    for (const [text, w] of parts) score += w * Math.min(3, text.match(g)?.length ?? 0);
+    if (score > top) { top = score; best = topic; }
+  }
+  // Uma pista só no meio do texto não basta.
+  return top >= 2 ? best : 'geral';
 }
 
 /** Ajusta siglas e abreviações para a leitura em voz alta soar natural. */

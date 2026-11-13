@@ -274,3 +274,10 @@ dialog.drawer.closing::backdrop { animation: drawer-fade-out .2s ease forwards; 
   .relatos-actions { justify-content: flex-end; }
   .relatos-top .sum-cta .btn { width: 100%; justify-content: center; }
 }
+
+/* Quando o resumo aparece, ele ocupa a largura toda, abaixo dos botões. */
+.relatos-top { flex-wrap: wrap; }
+.relatos-top > .sum-card { order: 3; flex: 1 1 100%; margin: 0; }
+.relatos-top:has(> .sum-card) .relatos-actions { margin-left: auto; }
+.relatos-top .sum-card .sum-head { flex-wrap: wrap; gap: 8px; }
+.drawer .hide-sm { display: inline !important; }

@@ -50,7 +50,8 @@ function HeaderSearch() {
   );
 }
 
-export function SiteHeader({ onMenu }: { onMenu?: () => void }) {
+/** simple: no modo simples só a marca; as seções e a busca levam a telas que o modo simples não mostra. */
+export function SiteHeader({ onMenu, simple }: { onMenu?: () => void; simple?: boolean }) {
   const path = usePathname();
   return <header className="site-header">
     <nav className="network-bar" aria-label="Sites da Globo">
@@ -62,18 +63,20 @@ export function SiteHeader({ onMenu }: { onMenu?: () => void }) {
     <div className="masthead">
       <div className="masthead-inner">
         <div className="masthead-left">
-          {onMenu ? <button className="masthead-action" type="button" onClick={onMenu} aria-haspopup="dialog"><Menu size={26} aria-hidden /><span>MENU</span></button>
+          {simple ? null : onMenu ? <button className="masthead-action" type="button" onClick={onMenu} aria-haspopup="dialog"><Menu size={26} aria-hidden /><span>MENU</span></button>
             : <Link href="/" className="masthead-action"><Menu size={26} aria-hidden /><span>MENU</span></Link>}
         </div>
         <Link href="/" className="masthead-brand" aria-label="GloboVila, início"><Logo /></Link>
         <div className="masthead-tools">
-          <HeaderSearch />
-          <Link href="/perfil" className="masthead-action" aria-label="Meu perfil"><CircleUserRound size={26} aria-hidden /><span>PERFIL</span></Link>
+          {!simple && <>
+            <HeaderSearch />
+            <Link href="/perfil" className="masthead-action" aria-label="Meu perfil"><CircleUserRound size={26} aria-hidden /><span>PERFIL</span></Link>
+          </>}
         </div>
       </div>
     </div>
-    <nav className="section-bar" aria-label="Seções GloboVila">
+    {!simple && <nav className="section-bar" aria-label="Seções GloboVila">
       {sections.map(([href, label]) => <Link key={href} href={href} aria-current={(href === '/' ? path === '/' : path.startsWith(href)) ? 'page' : undefined}>{label}</Link>)}
-    </nav>
+    </nav>}
   </header>;
 }

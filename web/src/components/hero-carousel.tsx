@@ -24,7 +24,10 @@ function useHighlights(max = 6) {
         // Matérias reais coletadas do g1 trazem a foto original: elas vêm primeiro no destaque.
         + (e.kind === 'article' && e.item.imageUrl ? 80 : 0);
     };
-    return officialFeed(db).filter((e) => now - e.at < 14 * DAY).sort((a, b) => score(b) - score(a)).slice(0, max);
+    const recent = officialFeed(db).filter((e) => now - e.at < 14 * DAY);
+    // Só notícias reais (coletadas do g1, com link da fonte). Os exemplos só entram se não houver nenhuma.
+    const real = recent.filter((e) => e.kind === 'article' && e.item.url);
+    return (real.length ? real : recent).sort((a, b) => score(b) - score(a)).slice(0, max);
   }, [db, me.followed, max]);
 }
 
@@ -95,7 +98,7 @@ export function HeroCarousel() {
                 <span className="hero-text">
                   <span className={`hero-chip t-${e.item.topic}`}>{program ? `${program} · ` : ''}{TOPIC_LABEL[e.item.topic]}</span>
                   <span className="hero-title"><span>{e.item.title}</span></span>
-                  <span className="hero-place"><MapPin size={14} aria-hidden />{e.item.bairroIds.map((b) => bairroName(db, b)).join(', ')}</span>
+                  <span className="hero-place"><MapPin size={14} aria-hidden />{e.item.bairroIds.length ? e.item.bairroIds.map((b) => bairroName(db, b)).join(', ') : 'Pernambuco'}</span>
                 </span>
               </Link>
             </li>
